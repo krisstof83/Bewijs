@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bewijsbundel – Kristof 2025 (v2.0)</title>
+<meta name="color-scheme" content="dark light">
+<style>
+:root{ --bg:#000713; --panel:rgba(0,22,44,0.45); --accent:#00eaff; --text:#b7f3ff; --muted:#78cde0; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0}
+main{max-width:1200px;margin:0 auto;padding:2rem}
+.panel{background:var(--panel);border:1px solid var(--accent);border-radius:1rem;padding:1.2rem;margin-bottom:1.2rem;box-shadow:0 0 14px rgba(0,234,255,0.25)}
+.neon{color:var(--accent);text-shadow:0 0 8px var(--accent)}
+.hud-table{width:100%;border-collapse:collapse;font-size:0.95rem;margin:0.4rem 0}
+.hud-table th,.hud-table td{border:1px solid var(--accent);padding:0.45rem 0.6rem;text-align:left;vertical-align:top}
+.hud-table th{background:rgba(0,40,80,0.5);color:var(--accent)}
+.btnbar{display:flex;gap:0.6rem;flex-wrap:wrap;margin:0.8rem 0}
+button{background:transparent;border:1px solid var(--accent);color:var(--text);padding:0.45rem 0.8rem;border-radius:0.6rem;cursor:pointer}
+button:hover{box-shadow:0 0 10px rgba(0,234,255,0.35)}
+.toc a{color:var(--muted);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
+@media print{.btnbar,.toc{display:none} details{open:true}}
+</style>
+</head>
+<body>
+<main>
+
+<section class="panel">
+  <h1 class="neon">Bewijsbundel – Kristof 2025</h1>
+  <p>Versie v2.0 • 2025-10-17</p>
+  <div class="btnbar">
+    <button onclick="window.print()">Print / PDF</button>
+    <button onclick="downloadJSON()">Exporteer JSON</button>
+    <a href="H41_bewijstabel.csv" download><button type="button">Download H.41 CSV</button></a>
+  </div>
+  <nav class="toc">
+    <b>Inhoud</b> · 
+    <a href="#dashboard">Dashboard</a> · 
+    <a href="#carrousel">Carrousel</a> · 
+    <a href="#h41">H.41</a>
+  </nav>
+</section>
+
+<details class="panel" id="dashboard" open>
+  <summary>📈 Dashboard – Kerncijfers</summary>
+  <table class="hud-table">
+    <thead><tr><th>Indicator</th><th>Waarde</th><th>Uitleg</th></tr></thead>
+    <tbody>
+      <tr><td>Dossiervolledigheid</td><td>74%</td><td>Percentage van beoogde bewijsstukken aanwezig (H.1–H.41).</td></tr>
+      <tr><td>Getuigendekking</td><td>61%</td><td>Mate waarin primaire/secondaire getuigen formeel bevestigd zijn.</td></tr>
+      <tr><td>Consistentie-index</td><td>88%</td><td>Overeenkomst verklaringen, tijdlijn en extern bewijs.</td></tr>
+      <tr><td>Bewijskracht-stabiliteit</td><td>33%</td><td>Balans subjectieve vs. objectieve bronnen.</td></tr>
+    </tbody>
+  </table>
+</details>
+
+<details class="panel" id="carrousel" open>
+  <summary>🗂️ Carrousel – H.28 • H.34 • H.40</summary>
+  <table class="hud-table">
+    <thead><tr><th>Sectie</th><th>H.28</th><th>H.34</th><th>H.40</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Narratieve kern</td>
+        <td>Start van device-notificaties • Weigering tegenbewijs • Emotionele druk</td>
+        <td>Pro-Ann • “Ik wil het verhaal niet horen.” • Afwijzing tegenbewijs</td>
+        <td>Juridische opvolging 2025 • Art. 443-445 Sw. / 550bis/ter Sw. • Focus op Ann</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details class="panel" id="h41" open>
+  <summary>🛫 H.41 – Luchthaven-incident &amp; Nasleep (Kaira, moeder, zorguitstel)</summary>
+
+  <h3>Feitenanalyse</h3>
+  <ul>
+    <li>[Waarheid] “Er werd niet gebeld met Ann aan de luchthaven.”</li>
+    <li>[Manipulatie] “Slechtpraten bij Kaira; opnieuw gelogen over mij.”</li>
+    <li>[Waarheid – te verifiëren] “Acute hartklachten (‘4 micro-hartaanvallen’). Dag nadien ziekenhuis.”</li>
+    <li>[Waarheid – te verifiëren] “Beloofde terug te komen, ‘ging ACE halen’, gaf kus; ik mocht niet mee.”</li>
+    <li>[Manipulatie] “Mama niet verwittigd; loog tegen mijn mama.”</li>
+    <li>[Emotie] “Niemand heb ik gezien, niemand.”</li>
+  </ul>
+
+  <h3>Bewijstabel</h3>
+  <div class="btnbar">
+    <button onclick="filterRed()">Toon alleen 🔴</button>
+    <button onclick="resetFilter()">Reset</button>
+  </div>
+  <table class="hud-table" id="bewijstabel">
+    <thead><tr><th>Feit</th><th>Bron</th><th>Bewijskracht</th><th>Juridische relevantie</th><th>Code</th></tr></thead>
+    <tbody>
+      <tr><td>Geen telefoongesprek met Ann aan de luchthaven</td><td>Call-log/WhatsApp (negatief)</td><td>🟢</td><td>Correctie van eerdere aanname</td><td>🟢</td></tr>
+      <tr><td>Negatief spreken bij Kaira</td><td>Chat/voice-note, getuige Kaira</td><td>🟡</td><td>Laster/eerroof (Art. 443-445 Sw.)</td><td>🔴</td></tr>
+      <tr><td>Kus + niet mogen meegaan</td><td>CCTV/getuigen/notitie</td><td>🟡</td><td>Controle-dynamiek</td><td>🟡</td></tr>
+      <tr><td>4 micro-hartaanvallen</td><td>Spoedfiche/ECG</td><td>🟢</td><td>Schade/causaliteit</td><td>🟢</td></tr>
+      <tr><td>Dag nadien ziekenhuis</td><td>Opname-timestamp</td><td>🟢</td><td>Zorguitstel</td><td>🔵</td></tr>
+      <tr><td>Mama niet verwittigd</td><td>Call-log moeder</td><td>🟡</td><td>Zorgplicht-context</td><td>🟡</td></tr>
+      <tr><td>Leugen tegen moeder</td><td>Exact citaat/screenshot</td><td>🟡→🟢</td><td>Reputatieschade</td><td>🔴</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Inconsistenties &amp; juridische gevolgen</h3>
+  <p>Uitstel van medische zorg ondanks klachten kan civielrechtelijk relevant zijn voor schadebegroting.
+  Leugens aan derden ondersteunen het patroon van beïnvloeding. Strafrechtelijk enkel relevant bij aantoonbare laster of schuldig verzuim (Art. 422bis Sw.).</p>
+</details>
+
+</main>
+<script>
+function downloadJSON(){
+  const data = {"meta": {"titel": "Kristof 2025 – Waarheidsdossier & Communicatieherstel", "versie": "v2.0", "datum": "2025-10-17"}, "dashboard": {"volledigheid": 74, "getuigen": 61, "consistentie": 88, "stabiliteit": 33}, "H41": {"bewijstabel": [["Geen telefoongesprek met Ann aan de luchthaven", "Call-log/WhatsApp (negatief)", "🟢", "Correctie van eerdere aanname", "🟢"], ["Negatief spreken bij Kaira", "Chat/voice-note, getuige Kaira", "🟡", "Laster/eerroof (Art. 443-445 Sw.)", "🔴"], ["Kus + niet mogen meegaan", "CCTV/getuigen/notitie", "🟡", "Controle-dynamiek", "🟡"], ["4 micro-hartaanvallen", "Spoedfiche/ECG", "🟢", "Schade/causaliteit", "🟢"], ["Dag nadien ziekenhuis", "Opname-timestamp", "🟢", "Zorguitstel", "🔵"], ["Mama niet verwittigd", "Call-log moeder", "🟡", "Zorgplicht-context", "🟡"], ["Leugen tegen moeder", "Exact citaat/screenshot", "🟡→🟢", "Reputatieschade", "🔴"]]}};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download="bewijsbundel_data.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function filterRed(){
+  const rows = document.querySelectorAll('#bewijstabel tbody tr');
+  rows.forEach(tr=>{ const code = tr.cells[4]?.innerText.trim(); tr.style.display = (code === '🔴') ? '' : 'none'; });
+}
+function resetFilter(){
+  const rows = document.querySelectorAll('#bewijstabel tbody tr');
+  rows.forEach(tr=> tr.style.display='');
+}
+</script>
+</body>
+</html>

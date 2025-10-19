@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Printpakket — HUD + A‑Z (Kristof 2025)</title>
+<meta name="color-scheme" content="dark light"/>
+<style>
+:root{--bg:#000713;--panel:rgba(0,22,44,.5);--panel2:rgba(0,32,64,.65);--accent:#00eaff;--txt:#c9f3ff;--muted:#8ad8ea;--grid:#113a56}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--txt);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;margin:0}
+header{padding:18px 24px;border-bottom:1px solid #0e2c44;box-shadow:0 0 18px rgba(0,234,255,.18) inset;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+h1{margin:0;font-size:22px;color:var(--accent);letter-spacing:.3px}
+.small{font-size:13px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;margin-left:auto}
+.toolbar button{padding:8px 12px;border:1px solid #1c3a52;border-radius:10px;background:transparent;color:var(--txt);cursor:pointer}
+.toolbar button.active{outline:2px solid var(--accent)}
+main{padding:18px 24px;max-width:1100px;margin:auto}
+hr{border:0;border-top:1px solid #1a3b56;margin:18px 0}
+#toc{background:var(--panel);border:1px solid #114;border-radius:14px;padding:14px}
+#toc h2{margin:0 0 8px 0;color:var(--accent);font-size:18px}
+#toc ol{margin:0;padding-left:18px}
+#toc a{color:var(--txt);text-decoration:none}
+.card{background:var(--panel);border:1px solid #114;border-radius:14px;padding:14px;margin:10px 0}
+.card h2{margin:0 0 6px 0;color:var(--accent);font-size:16px}
+.tablewrap{overflow:auto;border:1px solid #1a3b56;border-radius:12px;background:var(--panel2);padding:10px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #1a3b56;padding:8px 10px;text-align:left;font-size:14px}
+th{color:var(--accent)}
+blockquote{border-left:3px solid #1a3b56;margin:8px 0;padding:6px 10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.actions button{padding:8px 12px;border:1px solid #1c3a52;border-radius:10px;background:transparent;color:var(--txt);cursor:pointer}
+#tests{margin-top:12px;font-size:13px;color:var(--muted);white-space:pre-wrap}
+/* Print layout */
+@page{size:A4;margin:18mm 16mm 18mm 16mm}
+@media print{
+  html,body{background:#fff;color:#000}
+  header,.actions{display:none}
+  .card{background:#fff;border:1px solid #999;box-shadow:none}
+  a[href]:after{content:" (" attr(href) ")"}
+  .pb{page-break-before:always}
+  footer{position:fixed;bottom:0;left:0;right:0;color:#444;border-top:1px solid #bbb;padding:4mm 15mm;font-size:11px}
+}
+footer{padding:16px 24px;border-top:1px solid #0e2c44;color:#9eddf0;font-size:13px}
+.footerline{display:flex;gap:8px;align-items:center}
+.pageno::after{content:"Pagina " counter(page)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Printpakket — HUD + A‑Z • Kristof 2025</h1>
+  <div class="small">Versie: 2025‑10‑17 • ToC • Paginanummers • Print/PDF‑knop</div>
+  <div class="toolbar">
+    <button id="btnPrint">🖨️ Print / PDF</button>
+    <button id="btnExport">⤓ Exporteer JSON</button>
+    <button id="btnRunTests">▶ Testcases</button>
+  </div>
+</header>
+<main>
+  <section id="toc" class="card">
+    <h2>Inhoudsopgave</h2>
+    <ol id="tocList"></ol>
+  </section>
+
+  <section id="hud" class="card">
+    <h2>HUD 20‑secties</h2>
+    <div id="hudGrid"></div>
+  </section>
+
+  <section id="az" class="card pb">
+    <h2>A‑Z Hoofdreconstructie</h2>
+    <article id="azDoc"></article>
+  </section>
+
+  <div id="tests" class="card"></div>
+</main>
+<footer>
+  <div class="footerline"><span>Kristof 2025 — Printpakket HUD + A‑Z</span><span class="pageno"></span></div>
+</footer>
+<script>
+// 1) Defensive noop to avoid ReferenceError from external environments
+if(typeof window.invoke!=="function"){ window.invoke = function(){ console.warn("invoke() noop — geen externe integratie gedetecteerd"); }; }
+
+// 2) HUD‑data (20 secties)
+const sections = [
+  ["1. 📝 Narratieve Samenvatting","Jij stelt consequent dat je **niet vreemdging** en loyaal bleef. Medisch: lage testosteronwaarden in 05–07/2023, later herstel. Technisch: toegang/lezing van berichten (H.28) leidde tot wantrouwen. In 2024–2025 volgt triangulatie: Ann voedt Yolanda’s wantrouwen; Yolanda projecteert beschuldigingen. H.34 (13‑12‑2024) markeert de weigering van tegenbewijs."],
+  ["2. ⚖️ Juridische Bewijstabel","Zie tabel hieronder en vergrendelde PDF‑print voor formele indiening."],
+  ["3. ☑️ Checklist Actiepunten","• Hash alle kernbestanden (SHA‑256) en registreer\n• Koppel facturen/kwitanties voor schadeberekening\n• Genereer advocaat‑PDF en indexeer bijlagen\n• Visualiseer tijdlijn en tegenspraak‑matrix"],
+  ["4. 🕰️ Tijdlijn","2023: Medisch laag; start device‑toegang (H.28)\n2024: Pro‑Ann positionering; weigering tegenbewijs (H.34)\n07‑03‑2025: Tablet‑observatie\n26‑05‑2025: WhatsApp‑reeks met beschuldigingen\n2025: OCR‑screens; strategie vast: focus op Ann"],
+  ["5. 🗂️ Indexkaart (Feiten)","• Geen overspel door Kristof\n• Lage testosteronwaarden 05–07/2023\n• Toegang/lezing berichten zonder terugbellen\n• Wachten >1 uur bushokje\n• Ann’s inmenging en triangulatie\n• Pro‑Ann bericht 13‑12‑2024"],
+  ["6. 📊 Risico & Kansen Matrix","Impact hoog / waarschijnlijkheid middel: reputatieschade door narratief\nImpact middel / waarschijnlijkheid middel: civielrechtelijke stappen\nKans op herstel: afhankelijk van erkenning feiten en stopzetten triangulatie"],
+  ["7. 🎨 Infografiek‑blokken","Kernankers: H.28 (toegang/monitoring) • H.34 (weigering tegenbewijs) • Medisch 2023 • 2025‑chats"],
+  ["8. 📖 Storymap","Start: groeiend wantrouwen → Externe beïnvloeding (Ann) → Projectie/opbouw beschuldigingen → Jouw tegenbewijs → Weigering tegenbewijs → Escalatie/afsluiting"],
+  ["9. 🗣️ Communicatie‑analyse","Gaslighting/DARVO, projectie, reframing. Beschuldigingen zonder correlatie met objectieve markers worden als waarheid geframed."],
+  ["10. 🧠 DSM‑profielindicaties (niet‑diagnostisch)","Signalen compatibel met cluster‑B‑dynamieken: idealisatie/devaluatie, zwart‑wit denken, externe schuldtoewijzing. Geen diagnose."],
+  ["11. 📎 Bijlagenoverzicht","H.28 Pushbullet/Tablet/Toegang • H.34 13‑12‑2024 • Hoofdstuk XIII Manipulatie & Privacy • WhatsApp 07‑03‑2025 • WhatsApp 26‑05‑2025"],
+  ["12. 🔐 Chain of Custody","Bewaar elk bestand met SHA‑256 hash, timestamp, bronpad, en getuigen‑notitie bij cruciale items. Bewijs‑vault met immutable log."],
+  ["13. 🛡️ Privacy & Informatica","Art. 550bis/ter Sw. (informatica‑misdrijven), art. 460 Sw. (briefgeheim). Log toegang/lezing, stel forensische rapportage op."],
+  ["14. 📚 Juridische Mapping","Art. 443–444 Sw. (laster/eerroof) • Art. 445 Sw. (lasterlijke aangifte) • Art. 237 Sw. (belaging; voorheen 442bis) • BW 1382 oud / 5.1 e.v. nieuw (onrechtmatige daad)."],
+  ["15. 💶 Schadeberekening (kader)","Emotioneel (stress, slaapverlies) • Praktisch/financieel (verblijf, rechtskosten, tijdverlies) • Relationeel (stigma). Concretiseer zodra facturen/uren beschikbaar zijn."],
+  ["16. 🧭 Reputatie‑ en Correctieplan","Beperkte feitelijke rechtzetting aan strikt noodzakelijke derden; geen emotie; enkel verifieerbare ankers."],
+  ["17. ♟️ Strategische Opties","Behoud positie: geen klacht tegen Yolanda. Focus op dossieropbouw richting Ann. Voorbereide ingebrekestelling op basis van bewijs."],
+  ["18. 🧯 Mitigatie & Herstel","Minimaliseer publieke distributie. Fixeer feiten in beknopt memo. Bewaak digitale hygiëne (toegang, 2FA, logs)."],
+  ["19. 📄 Eén‑pagina Kernsamenvatting","Niet‑vreemdgegaan + Medisch 2023 + H.28 + H.34 + 2025‑chats = consistent tegengewicht tegen beschuldigingsnarratief."],
+  ["20. ✉️ Veilige Boodschap aan Yolanda","Onderwerp: Feiten vastleggen. Ik ben niet vreemdgegaan. Medisch 2023 gedocumenteerd. Jij kon mijn berichten zien maar belde niet terug. Geen verwijten; enkel feiten. Eventueel gesprek enkel op basis van eerlijkheid en respect."]
+];
+
+// 3) Evidence data voor HUD tabel
+const evidence = {
+  cols:["Feit","Bron","Bewijskracht","Juridische relevantie","Code"],
+  rows:[
+    ["**Geen overspel door Kristof**","Consistente verklaringen; tijdlijn","Middel","Weerlegging laster/eerroof","🟢"],
+    ["**Lage testosteronwaarden (05–07/2023)**","Medische attesten 2023","Hoog","Ondersteunt afwezigheid seksuele opportuniteit/zin","🟢"],
+    ["Toegang tot berichten, niet bellen","H.28 / toestel‑logs / chat‑timecodes","Middel‑hoog","Emotionele onttrekking; monitoringdiscussie","🟢"],
+    [">1 uur wachten aan bushokje","Verklaring 16‑10‑2025","Middel","Context verwaarlozing; ‘duty of care’ relationeel","🟡"],
+    ["Affaire‑claim met Ann","Uitspraken Yolanda; H.34‑context","Middel","Potentieel laster/eerroof","🔴"],
+    ["Ann’s actieve inmenging","Berichten/‘groepen’ (indien beschikbaar)","Variabel","Triangulatie; beïnvloeding","🔵"],
+    ["Pro‑Ann bericht 13‑12‑2024","H.34","Hoog","Weigering tegenbewijs; partijkeuze","🟢"],
+    ["WhatsApp 26‑05‑2025 beschuldigingen","Chatlog 26‑05‑2025","Middel‑hoog","Patroon gaslighting/DARVO","🔵"],
+    ["Tablet‑observatie 07‑03‑2025","WhatsApp‑screenshot; status ‘Yolanda is beperkt’","Hoog","Toegang/privacypad","🟢"],
+    ["OCR‑foto’s & screenshots","Bijlage H.28 / Hoofdstuk XIII","Hoog","Privacy‑inbreuk/manipulatie","🟢"]
+  ]
+};
+
+// 4) Render HUD
+const hudGrid = document.getElementById('hudGrid');
+sections.forEach((s,i)=>{
+  const card = document.createElement('div');
+  card.className = 'card';
+  const h = document.createElement('h3'); h.textContent = s[0]; card.appendChild(h);
+  if(i===1){
+    const wrap = document.createElement('div'); wrap.className='tablewrap';
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    evidence.cols.forEach(c=>{const th=document.createElement('th'); th.textContent=c; trh.appendChild(th)});
+    thead.appendChild(trh); table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    evidence.rows.forEach(r=>{const tr=document.createElement('tr'); r.forEach(cell=>{const td=document.createElement('td'); td.innerHTML=cell; tr.appendChild(td)}); tbody.appendChild(tr)});
+    table.appendChild(tbody); wrap.appendChild(table); card.appendChild(wrap);
+  } else {
+    const p = document.createElement('p'); p.innerHTML = s[1]; card.appendChild(p);
+  }
+  hudGrid.appendChild(card);
+});
+
+// 5) A‑Z bron (markdown)
+const azMarkdown = `# A‑Z Hoofdreconstructie — Kristof 2025 – Waarheidsdossier en Communicatieherstel (v2025‑10‑16)
+
+**Doel:** één doorlopend, juridisch bruikbaar verhaal van A tot Z, met integratie van feiten, context, gedragspatronen en bewijs. Stijl: forensisch‑juridisch. Cruciale passages **vet en onderstreept**. Labels: [Waarheid] [Manipulatie] [Wet] [Narcisme] [DSM‑profiel]. Kleurcodes in de bewijstabel: 🟢 ondersteunend, 🔵 manipulatie, 🔴 strafbaar, 🟡 emotie.
+
+---
+
+## 0) Narratieve samenvatting (executive)
+**Kern:** Jij stelt consequent dat je **__niet vreemdging__** en loyaal bleef. Vanaf 2023 speelden medische factoren (**__lage testosteronwaarden__**) en technologische incidenten (device‑/bericht‑toegang; **H.28**) een rol in groeiend wantrouwen. In 2024–2025 verscherpte dit door **triangulatie**: **Ann** voedde en versterkte Yolanda’s wantrouwen; Yolanda spiegelde beschuldigingen naar jou ([Manipulatie] **projectie**). Cruciale externe markering is het **bericht van 13‑12‑2024** (**H.34**) met **__“Ik wil het verhaal niet horen”__** en expliciete pro‑Ann positie. In 2025 escaleerden de verwijten (o.a. WhatsApp 26‑05‑2025), terwijl je eigen data, logs en medische context jouw standpunt ondersteunen. Juridisch bestaan risicozones voor **laster/eerroof**, **belaging**, en **privacyschending** indien verspreiding/opzet/ongeoorloofde toegang aangetoond worden. Strategisch houd je vast aan: **geen klacht tegen Yolanda**, focus op dossieropbouw t.a.v. **Ann**.
+
+---
+
+## 1) Chronologie A‑Z (2023 → 2025)
+**2023**
+- [Waarheid] Medische context: bevestigde **__lage testosteronwaarden (mei–juli 2023)__**; functioneel herstel nadien. Relevantie: weerlegging seksuele verdenkingen in die periode.
+- [Waarheid] Start device‑/bericht‑toegang en meldingen (Pushbullet/Tablet) die later als **H.28** gecatalogeerd werden; aanleiding tot discussies over privacy en controle.
+
+**2024**
+- [Manipulatie][Triangulatie] Toenemende invloed van **Ann** in het relationele narratief; actieve messaging en zoeken van bondgenootschap rondom Yolanda; versterking van wantrouwen tegenover jou.
+- [Waarheid] **13‑12‑2024 (H.34):** extern bericht met **__“Ik wil het verhaal niet horen”__** en expliciet geloof in Ann’s versie; weigering van tegenbewijs. Markeerpunt van partijkeuze.
+
+**2025**
+- [Waarheid] **07‑03‑2025:** WhatsApp‑chat waarin Yolanda aangeeft berichten op jouw tablet te hebben gezien en suggereert dat jij antwoorden verwijderde; status “Yolanda is beperkt” zichtbaar. Relevantie: toegang/monitoringdiscussie (koppeling H.28).
+- [Manipulatie] **26‑05‑2025:** zeer lange WhatsApp‑reeks van Yolanda met beschuldigingen (bedrog, leugen, manipulatie, “narcistische trekjes”), afsluiting communicatie. Jij weerlegt en wijst naar Ann’s invloed.
+- [Waarheid] **03‑08‑2025:** OCR‑foto’s en screenshots toegevoegd; integratie in **Bijlage H.28** en Hoofdstuk XIII (Pushbullet, manipulatie, privacy‑inbreuk).
+- [Waarheid] **03–10‑07‑2025:** jouw berichten ter weerlegging en reconstructie, geïntegreerd met tijdlijn en dader/slachtoffer‑dynamiek.
+- [Waarheid] **09‑09‑2025:** positie gefixeerd: **géén klacht tegen Yolanda**, wél dossieropbouw/actie t.a.v. **Ann Coenen**.
+- [Waarheid] **16‑10‑2025:** recente verklaringen: wachten >1 uur aan bushalte zonder reactie; “zij kon berichten lezen maar belde niet”; nadruk op **__“Ik ging niet vreemd”__**; beschrijving van voortdurende projectie en zoektocht naar bondgenoten door Yolanda, met Ann als versterker.
+
+---
+
+## 2) Feiten vs. aannames en framing (met labels)
+- [Waarheid] **__“Ik ging niet vreemd.”__** Onderbouwd door consistente ontkenning, tijdlijn en medische context 2023.
+- [Waarheid] **__“Lage testosteronwaarden 2023”__** bevestigd; later herstel in 2024.
+- [Waarheid] Yolanda kon jouw berichten lezen (toegang/logs), maar belde niet terug op cruciale momenten; jij wachtte **>1 uur** aan het bushokje.
+- [Manipulatie] Yolanda’s frame: jij zou “paranoia” zijn, “afgedwaald,” “achter ziektes”; ontkrachtend t.o.v. objectieve markers en gedrag.
+- [Manipulatie][Triangulatie] **Ann** als derde actor die wantrouwen voedt via berichten/groepen; framing van jou als dader.
+- [Wet] Mogelijke juridische zones: laster/eerroof (art. 443–444 Sw.), lasterlijke aangifte (art. 445 Sw.), belaging (art. 237 Sw., voorheen 442bis), informaticamisdrijven/briefgeheim (art. 550bis/ter, art. 460 Sw.).
+- [Narcisme][DSM‑profiel] Signalen van empathische deficieten en reputatiesturing bij tegenpartij; **geen diagnose**, indicatieve gedragspatronen.
+
+---
+
+## 3) Gedragsanalyse (gaslighting, projectie, triangulatie)
+- **Projectie:** verwijten aan jou spiegelen gedragingen bij haar (bondgenoten zoeken, emotionele substitutie, omkeren schuld). [Manipulatie]
+- **Gaslighting/DARVO:** jouw feiten (wachten, attesten, logs) worden gebagatelliseerd of herverpakt als “paranoia,” terwijl zij het slachtofferschap claimt. [Manipulatie]
+- **Triangulatie:** **Ann ↔ Yolanda ↔ Jij**. Ann fungeert als “bevestigings‑hub” die twijfel aanjaagt en verhalen legitimeert; Yolanda vindt daar schijnzekerheid; jij wordt geïsoleerd. [Manipulatie][Triangulatie]
+- **Patroonverwachting:** bij tegenbewijs volgt escalatie of reframing; mobiliseren van derden; nieuwe narratieve ankers ter vervanging van weerlegde claims.
+
+---
+
+## 4) Bewijstabel (geconsolideerd)
+| Feit (vet = kern) | Bron | Bewijskracht | Juridische relevantie | Code |
+|---|---|---:|---|:---:|
+| **__Geen overspel door Kristof__** | Consistente verklaringen; tijdlijn | Middel | Weerlegging laster/eerroof | 🟢 |
+| **__Lage testosteronwaarden (05–07/2023)__** | Medische attesten 2023 | Hoog | Ondersteunt afwezigheid seksuele opportuniteit/zin | 🟢 |
+| **Toegang tot berichten, niet bellen** | H.28 / toestel‑logs / chat‑timecodes | Middel‑hoog | Emotionele onttrekking; monitoringdiscussie | 🟢 |
+| **>1 uur wachten aan bushokje** | Verklaring 16‑10‑2025 | Middel | Context verwaarlozing; ‘duty of care’ relationeel | 🟡 |
+| **Affaire‑claim met Ann** | Uitspraken Yolanda; H.34‑context | Middel | Potentieel laster/eerroof | 🔴 |
+| **Ann’s actieve inmenging** | Berichten/“groepen” (indien beschikbaar) | Variabel | Triangulatie; beïnvloeding | 🔵 |
+| **Pro‑Ann bericht 13‑12‑2024** | **H.34** | Hoog | Weigering tegenbewijs; partijkeuze | 🟢 |
+| **WhatsApp 26‑05‑2025 beschuldigingen** | Chatlog 26‑05‑2025 | Middel‑hoog | Patroon gaslighting/DARVO | 🔵 |
+| **Tablet‑observatie 07‑03‑2025** | WhatsApp‑screenshot; status “Yolanda is beperkt” | Hoog | Toegang/privacypad | 🟢 |
+| **OCR‑foto’s & screenshots** | Bijlage **H.28** / Hoofdstuk XIII | Hoog | Privacy‑inbreuk/manipulatie | 🟢 |
+
+> **Cruciale citaten:** **__“Ik wil het verhaal niet horen”__** (13‑12‑2024, H.34) • **__“Ik ging niet vreemd”__** (herhaald) • **__“Je kon mijn berichten lezen, maar je belde niet”__** (16‑10‑2025)
+
+---
+
+## 5) Inconsistenties & juridische gevolgen
+**Inconsistenties**
+1. Beschuldiging overspel vs. medische en tijdlijnfeiten → **projectie** en **reframing**. [Manipulatie]
+2. Toegang tot jouw communicatie vs. nalaten te bellen en toch jou verantwoordelijk stellen voor “afstand” → **omkering schuld**. [Manipulatie]
+3. Pro‑Ann positionering en weigering van tegenbewijs (H.34) vs. claim op waarheid → **selectieve epistemologie**. [Manipulatie]
+
+**Juridische mapping (voorwaardelijk, afhankelijk van bewijsdetail)**
+- **Laster & eerroof (art. 443–444 Sw.)**: onware, schadelijke aantijgingen aan derden.
+- **Lasterlijke aangifte (art. 445 Sw.)**: opzettelijk valse aangifte bij autoriteit.
+- **Belaging (art. 237 Sw.)**: stelselmatig gedrag dat ernstige onrust veroorzaakt.
+- **Informaticamisdrijven (art. 550bis/ter Sw.)** en **briefgeheim (art. 460 Sw.)**: ongeoorloofde toegang/lezing van communicatie.
+- **Burgerrechtelijk (art. 1382 e.v. BW oud / 5.1 e.v. BW nieuw)**: fout, schade, oorzakelijk verband → schadevergoeding.
+
+---
+
+## 6) Schadeoverzicht (indicatief kader)
+- **Emotioneel:** stress, slaapverlies, sociale isolatie door reputatie‑narratief. 🟡
+- **Praktisch/financieel:** verblijf/huisonzekerheid, werkdruk, rechtskosten; tijdverlies door incidenten en bewijsverzameling. 🟡
+- **Relationeel:** verlies van vertrouwen, verbreking communicatie, sociale stigmatisering. 🟡
+
+> Opmerking: precieze bedragen en begroting worden apart geconsolideerd (schadeberekeningstabel) zodra alle bewijsstukken met tijdstempels en facturen gekoppeld zijn.
+
+---
+
+## 7) Juridische & strategische opties
+**A. Behoud positie:** geen klacht tegen Yolanda; focus op feitencorrectie en reputatie‑herstel via beperkte, feitelijke rechtzettingen.
+**B. Dossier t.a.v. Ann:** bundel berichten, daden en eventuele oproepen aan derden; map opzet en escalatie; stel sjabloon ingebrekestelling op.
+**C. Bewijs‑integriteit:** hash‑vault, chain of custody; elk screenshot/attest voorzien van checksum (SHA‑256) en chronologische index.
+**D. Communicatiespoor:** enkel neutraal, ‘droog’ feitenanker (zie bijlage). Geen emotionele escalatie.
+**E. Publicatie‑discipline:** deel enkel met noodzakelijke derden (advocaat, gerecht, vertrouwenspersoon). Documenteer distributie.
+
+---
+
+## 8) Strategische samenvatting (1 pagina)
+Jouw A‑Z‑verhaal toont een **consistent patroon van projectie en triangulatie** waarin jij als dader wordt neergezet zonder hard bewijs, terwijl objectieve pijlers (medisch 2023, logs, tijdlijn) jouw standpunt ondersteunen. De **kernankers** zijn H.28 (toegang/monitoring), H.34 (weigering tegenbewijs, pro‑Ann), en de 2025‑chats (beschuldigingen, afsluiting). Juridisch zijn paden mogelijk, maar je strategische keuze om Yolanda buiten een formele klacht te houden is verdedigbaar zolang de **documentaire laag** onwrikbaar is en de focus op Ann’s aandeel helder wordt vastgelegd. De volgende mijlpaal is **consolidatie en hashing van alle kernbestanden**, gevolgd door een **korte reputatie‑rectificatie** bij strikt noodzakelijke stakeholders.
+
+---
+
+## 9) Bijlage – Veilige, neutrale boodschap aan Yolanda
+**Onderwerp:** Feiten vastleggen  
+Ik leg even vast wat relevant is: **__ik ben niet vreemdgegaan__**. In 2023 had ik **__lage testosteronwaarden__**, wat medisch gedocumenteerd is. Jij kon mijn berichten zien, maar belde niet terug toen ik wachtte. Dit is geen verwijt, wel een feitelijke notitie. Ik wens geen discussie of verwijten. Als je alsnog open en eerlijk wil spreken, kan dat enkel op basis van feiten en respect.
+
+---
+
+## 10) Operationeel – Index & volgende stappen
+1. **Indexkoppeling:** H.28 (Pushbullet/Tablet/Toegang); H.34 (13‑12‑2024 bericht); Hoofdstuk XIII (manipulatie & privacy); WhatsApp 26‑05‑2025; WhatsApp 07‑03‑2025.  
+2. **Checklist:**
+   - [ ] Hash alle kernbestanden (SHA‑256) en log in register  
+   - [ ] Voeg facturen/kwitanties toe voor schadeberekening  
+   - [ ] Genereer PDF‑versie (Advocaat) en bewaar als Bijlage S‑2/S‑3  
+   - [ ] Visualiseer tijdlijn (HUD 20‑secties sjabloon)  
+3. **Distributie:** uitsluitend advocaat en strikt noodzakelijke derden.  
+
+> **Slotanker:** **__“Ik ging niet vreemd”__**, **__“Lage testosteronwaarden 2023”__**, **__H.34: ‘Ik wil het verhaal niet horen’__**, **__H.28: toegang/monitoring__**. Dit is het centrale vierluik waarop het A‑Z verhaal rust.`;
+
+// 6) Minimalistische markdown → HTML renderer
+function mdToHtml(md){
+  const lines = md.split(/\r?\n/);
+  const out = [];
+  let inList=false, inTable=false, tableRows=[];
+  const flushList=()=>{ if(inList){ out.push('</ul>'); inList=false; } };
+  const flushTable=()=>{
+    if(!inTable) return;
+    if(tableRows.length){
+      const header = tableRows[0];
+      const body = tableRows.slice(2);
+      out.push('<div class="tablewrap"><table><thead><tr>' + header.split('|').slice(1,-1).map(c=>`<th>${c.trim()}</th>`).join('') + '</tr></thead><tbody>');
+      body.forEach(r=>{ out.push('<tr>' + r.split('|').slice(1,-1).map(c=>`<td>${c.trim()}</td>`).join('') + '</tr>'); });
+      out.push('</tbody></table></div>');
+    }
+    inTable=false; tableRows=[];
+  };
+  const fmt = s=> s.replace(/\*\*__(.+?)__\*\*/g,'<b><u>$1</u></b>');
+
+  for(let i=0;i<lines.length;i++){
+    const L = lines[i];
+    if(/^\|/.test(L)){ if(!inTable){ flushList(); inTable=true; } tableRows.push(L); continue; }
+    if(inTable && !/^\|/.test(L)){ flushTable(); }
+    if(/^---+$/.test(L.trim())){ flushList(); out.push('<hr/>'); continue; }
+    if(/^#\s+/.test(L)){ flushList(); out.push('<h1>'+fmt(L.replace(/^#\s+/,''))+'</h1>'); continue; }
+    if(/^##\s+/.test(L)){ flushList(); out.push('<h2>'+fmt(L.replace(/^##\s+/,''))+'</h2>'); continue; }
+    if(/^\-\s+/.test(L)){ if(!inList){ out.push('<ul>'); inList=true; } out.push('<li>'+fmt(L.replace(/^\-\s+/,''))+'</li>'); continue; }
+    if(/^>\s+/.test(L)){ flushList(); out.push('<blockquote>'+fmt(L.replace(/^>\s+/,''))+'</blockquote>'); continue; }
+    if(L.trim()===''){ flushList(); out.push('<p></p>'); continue; }
+    out.push('<p>'+fmt(L)+'</p>');
+  }
+  flushList(); flushTable();
+  return out.join('\n');
+}
+
+document.getElementById('azDoc').innerHTML = mdToHtml(azMarkdown);
+
+// 7) Build ToC from HUD and A‑Z headings
+function buildToc(){
+  const list = document.getElementById('tocList');
+  list.innerHTML = '';
+  // HUD cards
+  document.querySelectorAll('#hud h3').forEach(h=>{
+    const id = h.textContent.replace(/[^a-z0-9]+/gi,'-').replace(/(^-|-$)/g,'').toLowerCase();
+    h.id = id;
+    const li = document.createElement('li');
+    const a = document.createElement('a'); a.href = '#'+id; a.textContent = h.textContent; li.appendChild(a); list.appendChild(li);
+  });
+  // A‑Z headings
+  document.querySelectorAll('#azDoc h1,#azDoc h2').forEach(h=>{
+    const id = h.textContent.replace(/[^a-z0-9]+/gi,'-').replace(/(^-|-$)/g,'').toLowerCase();
+    h.id = id;
+    const li = document.createElement('li');
+    const a = document.createElement('a'); a.href = '#'+id; a.textContent = h.textContent; li.appendChild(a); list.appendChild(li);
+  });
+}
+buildToc();
+
+// 8) Export JSON (HUD + A‑Z + Evidence)
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const payload = { meta:{naam:'Kristof 2025 – Printpakket', exportdatum:'2025‑10‑17'}, sections: sections.map(([t,c])=>({titel:t, inhoud:c})), bewijstabel: evidence, az_markdown: azMarkdown };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kristof_printpakket_2025-10-17.json'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+// 9) Print knop
+document.getElementById('btnPrint').addEventListener('click',()=>{ window.print(); });
+
+// 10) Testcases
+function assert(c,m){ return c?`✔ ${m}`:`✘ ${m}` }
+function runTests(){
+  const out = [];
+  out.push(assert(Array.isArray(sections) && sections.length===20,'HUD heeft exact 20 secties'));
+  out.push(assert(document.querySelectorAll('#hudGrid .card').length===20,'HUD‑cards gerenderd'));
+  out.push(assert(typeof window.invoke==='function','invoke() is gedefinieerd (noop indien extern ontbreekt)'));
+  out.push(assert(document.querySelector('#tocList li') && document.querySelectorAll('#tocList li').length>=10,'ToC bevat ≥ 10 items'));
+  out.push(assert(/A‑Z Hoofdreconstructie/.test(document.getElementById('azDoc').innerHTML),'A‑Z document is gerenderd'));
+  out.push(assert(document.querySelector('#azDoc table')!=null,'A‑Z markdown‑tabel herkend en omgezet'));
+  document.getElementById('tests').textContent = out.join('\n');
+}
+document.getElementById('btnRunTests').addEventListener('click', runTests);
+runTests();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bewijs Manager – Invoegen • Opslaan • Analyseren</title>
+<meta name="color-scheme" content="dark light">
+<style>
+:root{--bg:#000713; --panel:rgba(0,22,44,.55); --panel-strong:rgba(0,32,64,.7); --ink:#e7faff; --muted:#9cc9d6; --line:rgba(0,234,255,.28); --accent:#00eaff; --accent2:#2aa9ff;}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(0,32,64,.95),rgba(0,32,64,.7));border-bottom:1px solid var(--accent);backdrop-filter:blur(8px);padding:12px 16px}
+h1{margin:0;color:var(--accent);font-size:18px}
+main{max-width:1200px;margin:10px auto 28px;padding:0 16px}
+.panel{background:var(--panel);border:1px solid var(--accent);border-radius:14px;box-shadow:0 0 14px rgba(0,234,255,.2);margin:12px 0}
+.panel h2{margin:0;padding:12px 14px;color:var(--accent);font-size:16px;border-bottom:1px solid rgba(0,234,255,.2)}
+.section{padding:12px 14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001629;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;box-shadow:0 0 12px rgba(0,234,255,.35)}
+button:active{transform:translateY(1px)}
+input[type="file"]{padding:8px 10px;border:1px solid var(--accent2);border-radius:10px;background:rgba(0,22,44,.65);color:var(--ink)}
+.drop{border:2px dashed var(--accent2);border-radius:12px;padding:18px;text-align:center;background:rgba(0,22,44,.45);color:var(--muted)}
+.table{width:100%;border-collapse:collapse} .table th,.table td{border-bottom:1px solid rgba(0,234,255,.15);padding:8px 10px;text-align:left;vertical-align:top}
+.small{color:var(--muted);font-size:12px}
+.badge{padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.25);font-size:11px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi .card{padding:12px;border:1px solid rgba(0,234,255,.25);border-radius:12px;background:rgba(0,22,44,.45);text-align:center}
+progress{width:100%}
+</style>
+</head>
+<body>
+<header><h1>Bewijs Manager – Invoegen • Opslaan • Analyseren</h1></header>
+<main>
+  <section class="panel">
+    <h2>1) Bestanden toevoegen</h2>
+    <div class="section">
+      <div class="row">
+        <input id="file" type="file" multiple>
+        <button id="btnAdd">Toevoegen</button>
+        <button id="btnClear">Lijst wissen</button>
+      </div>
+      <div id="drop" class="drop" style="margin-top:10px">Sleep bestanden hierheen of kies via “Bestanden toevoegen”.</div>
+      <div class="small" style="margin-top:8px">Alles blijft lokaal in je browser (IndexedDB + SHA-256 hash). Export naar schijf via File System Access API of exporteer manifest JSON.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2) Overzicht & analyse</h2>
+    <div class="section">
+      <div class="row">
+        <input id="q" placeholder="Zoek op bestandsnaam, type, hash…" style="flex:1;min-width:240px;padding:8px 10px;border:1px solid var(--accent2);border-radius:10px;background:rgba(0,22,44,.65);color:var(--ink)">
+        <button id="btnExportJson">Export manifest JSON</button>
+        <button id="btnWriteFolder" title="Schrijf naar assets/* via File System Access API">Schrijf naar map…</button>
+        <button id="btnDeleteAll">Verwijder alles (DB)</button>
+      </div>
+      <div class="kpi" style="margin-top:10px">
+        <div class="card"><div class="small">Totaal items</div><div id="k_total" style="font-size:20px">0</div></div>
+        <div class="card"><div class="small">PDF</div><div id="k_pdf" style="font-size:20px">0</div></div>
+        <div class="card"><div class="small">Afbeeldingen</div><div id="k_img" style="font-size:20px">0</div></div>
+        <div class="card"><div class="small">Audio/Video</div><div id="k_av" style="font-size:20px">0</div></div>
+      </div>
+      <div style="margin-top:8px"><div class="small">Verwerking</div><progress id="prog" value="0" max="100"></progress></div>
+      <table class="table" id="tbl" style="margin-top:10px">
+        <thead><tr><th>Bestand</th><th>Type</th><th>Grootte</th><th>SHA-256</th><th>Analyse</th><th>Acties</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="small">Eenvoudige keyword-scan op bestandsnaam: ‘whatsapp’, ‘pushbullet’, ‘screenshot’, ‘attest’, ‘verklaring’.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3) Integratie met je site</h2>
+    <div class="section">
+      <ol>
+        <li>Kies <b>Schrijf naar map…</b> en selecteer de root (waar <code>index.html</code> staat).</li>
+        <li>Er worden submappen gemaakt: <code>assets/pdf|img|audio|video|docs</code>.</li>
+        <li>Je krijgt een <b>manifest.json</b> met alle paden. Koppel ze in je HTML.</li>
+      </ol>
+      <div class="small">Beste ervaring: Chrome/Edge desktop (File System Access API). Lukt schrijven niet op host? Gebruik de admin lokaal en commit/push de nieuwe assets.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const DB_NAME='kristof_evidence_db', STORE='files'; let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>{const d=e.target.result; if(!d.objectStoreNames.contains(STORE)){const os=d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true}); os.createIndex('name','name'); os.createIndex('type','type'); os.createIndex('hash','hash',{unique:true});}}; r.onsuccess=e=>{db=e.target.result;res(db)}; r.onerror=e=>rej(e.target.error);});}
+function store(m='readonly'){return db.transaction(STORE,m).objectStore(STORE)}
+function addItem(it){return new Promise((res,rej)=>{const r=store('readwrite').add(it); r.onsuccess=()=>res(r.result); r.onerror=e=>rej(e.target.error);});}
+function listAll(){return new Promise((res,rej)=>{const r=store().getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=e=>rej(e.target.error);});}
+function clearAll(){return new Promise((res,rej)=>{const r=store('readwrite').clear(); r.onsuccess=()=>res(true); r.onerror=e=>rej(e.target.error);});}
+function extOf(n){const i=n.lastIndexOf('.'); return i>=0?n.slice(i).toLowerCase():'';}
+function catForExt(e){if(e==='.pdf')return'pdf'; if(['.png','.jpg','.jpeg','.gif','.webp','.svg'].includes(e))return'img'; if(['.mp3','.wav','.ogg','.m4a','.flac'].includes(e))return'audio'; if(['.mp4','.webm','.mov','.mkv'].includes(e))return'video'; return'docs';}
+async function sha256(file){const buf=await file.arrayBuffer(); const hb=await crypto.subtle.digest('SHA-256',buf); return Array.from(new Uint8Array(hb)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+function bytes(n){if(n<1024)return n+' B';const k=1024,s=['KB','MB','GB','TB'];let i=Math.floor(Math.log(n)/Math.log(k));return(n/Math.pow(k,i)).toFixed(1)+' '+s[i];}
+function analyzeName(n){const L=n.toLowerCase(),h=[]; if(L.includes('whatsapp'))h.push('WhatsApp'); if(L.includes('pushbullet'))h.push('Pushbullet'); if(L.includes('screenshot'))h.push('Screenshot'); if(L.includes('attest'))h.push('Attest'); if(L.includes('verklaring'))h.push('Verklaring'); return h.length?'Keywords: '+h.join(', '):'—';}
+const fileInput=document.getElementById('file'); const btnAdd=document.getElementById('btnAdd'); const btnClear=document.getElementById('btnClear'); const drop=document.getElementById('drop'); const tblBody=document.querySelector('#tbl tbody'); const q=document.getElementById('q'); const prog=document.getElementById('prog');
+function kpi(items){document.getElementById('k_total').textContent=items.length; document.getElementById('k_pdf').textContent=items.filter(x=>x.category==='pdf').length; document.getElementById('k_img').textContent=items.filter(x=>x.category==='img').length; document.getElementById('k_av').textContent=items.filter(x=>x.category==='audio'||x.category==='video').length;}
+function render(items){const term=(q.value||'').toLowerCase(); tblBody.innerHTML=items.filter(it=>!term||(it.name.toLowerCase().includes(term)||it.type.includes(term)||it.hash.includes(term))).map(it=>`<tr><td><span class="mono">${it.name}</span></td><td>${it.type} <span class="badge">${it.category}</span></td><td>${bytes(it.size)}</td><td class="mono">${it.hash}</td><td>${analyzeName(it.name)}</td><td><button data-dl="${it.id}">Download</button></td></tr>`).join(''); 
+tblBody.querySelectorAll('button[data-dl]').forEach(b=>b.addEventListener('click',async e=>{const id=Number(e.target.getAttribute('data-dl'));const it=items.find(x=>x.id===id);if(!it)return; const blob=new Blob([it.data],{type:it.type||'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=it.name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);})); kpi(items);}
+async function refresh(){render(await listAll());}
+async function addFiles(list){prog.value=0; const files=Array.from(list||[]); for(let i=0;i<files.length;i++){const f=files[i]; const hash=await sha256(f); const ext=extOf(f.name); const cat=catForExt(ext); const arr=new Uint8Array(await f.arrayBuffer()); await addItem({name:f.name,type:f.type||'application/octet-stream',size:f.size,hash,category:cat,data:arr}); prog.value=Math.round(((i+1)/files.length)*100);} await refresh();}
+btnAdd.addEventListener('click',()=>fileInput.files&&addFiles(fileInput.files));
+btnClear.addEventListener('click',async()=>{if(confirm('Zeker? Dit verwijdert alle lokaal opgeslagen items (alleen in deze browser).')){await clearAll();await refresh();}});
+q.addEventListener('input',refresh);
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='rgba(0,40,80,.5)';}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='rgba(0,22,44,.45)';}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files; if(f&&f.length)addFiles(f);});
+document.getElementById('btnExportJson').addEventListener('click', async ()=>{const items=await listAll(); const manifest={generated_at:new Date().toISOString(),total:items.length,assets:items.map(it=>({name:it.name,size:it.size,type:it.type,hash_sha256:it.hash,suggested_path:`assets/${it.category}/${it.name}`}))}; const blob=new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='manifest.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);});
+document.getElementById('btnWriteFolder').addEventListener('click', async ()=>{ if(!('showDirectoryPicker' in window)){alert('Chrome/Edge nodig voor File System Access API.'); return;} try{ const root=await window.showDirectoryPicker(); async function ensure(sub){const parts=sub.split('/'); let cur=root; for(const p of parts){cur=await cur.getDirectoryHandle(p,{create:true});} return cur;} const dirs={pdf:await ensure('assets/pdf'), img:await ensure('assets/img'), audio:await ensure('assets/audio'), video:await ensure('assets/video'), docs:await ensure('assets/docs')}; const items=await listAll(); for(const it of items){const dir=dirs[it.category]||dirs.docs; const fh=await dir.getFileHandle(it.name,{create:true}); const ws=await fh.createWritable(); await ws.write(new Blob([it.data],{type:it.type||'application/octet-stream'})); await ws.close();} const manifest={generated_at:new Date().toISOString(), total:items.length, assets:items.map(it=>({name:it.name,hash:it.hash,path:`assets/${it.category}/${it.name}`}))}; const mf=await root.getFileHandle('manifest.json',{create:true}); const mw=await mf.createWritable(); await mw.write(new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'})); await mw.close(); alert('Bestanden + manifest.json geschreven.'); }catch(e){console.error(e); alert('Schrijven geannuleerd of mislukt.');} });
+openDB().then(refresh);
+</script>
+</body>
+</html>

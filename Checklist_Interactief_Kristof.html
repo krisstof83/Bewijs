@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bewijskracht Checklist – Interactief</title>
+<style>
+:root{--bg:#0b1220;--panel:#111b2e;--muted:#a8c0d8;--text:#e2f3ff;--accent:#27d3ff;--accent2:#7af7ff;--danger:#ff6b6b;--warn:#ffd166;--ok:#2ef0a1;--neutral:#4d6a87}
+*{box-sizing:border-box}body{margin:0;background:#0b1220;color:var(--text);font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}
+header{padding:18px 20px;border-bottom:1px solid #1e2a45;background:#0c1527;position:sticky;top:0;z-index:10}
+h1{margin:0;font-size:20px}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.container{max-width:1200px;margin:0 auto;padding:18px}.panel{background:var(--panel);border:1px solid #1e2a45;border-radius:12px;padding:12px 14px}
+.controls{display:grid;grid-template-columns:1fr 160px 160px 160px 1fr;gap:10px;align-items:center}
+.controls input[type="search"],select,button{padding:10px 12px;border-radius:10px;border:1px solid #223456;background:#0e182b;color:var(--text)}
+button.primary{background:linear-gradient(180deg,#1e9fe8,#0e6db6);border-color:#1082cb}button.ghost{background:#0e182b}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #284266;color:#a8c0d8}
+.badge.hoog{border-color:#ff9f9f;color:#ffcaca}.badge.middel{border-color:#ffd166;color:#ffe4aa}.badge.middel-hoog{border-color:#ffb85c;color:#ffd9a1}
+.progress{height:12px;border-radius:999px;background:#13203a;overflow:hidden;position:relative}.progress>span{position:absolute;inset:0;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+.progress-label{font-size:12px;color:var(--muted);margin-top:6px}
+table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid #1a2946;vertical-align:top}th{text-align:left;color:#a8c0d8;position:sticky;top:74px;background:var(--panel)}
+tr:hover td{background:rgba(39,211,255,.03)}
+.status-pill{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid #2a3f61}
+.status-Te\ verzamelen{border-color:#ffd166;color:#ffd166}.status-Te\ verifiëren{border-color:#ff9f6b;color:#ffb48a}
+.status-In\ behandeling{border-color:#7ab0ff;color:#a3c7ff}.status-Compleet{border-color:#2ef0a1;color:#81ffd1}
+.tabbar{display:flex;gap:8px;margin-bottom:10px}.hidden{display:none}
+.kbd{font:12px/1.2 ui-monospace,Menlo,Consolas,monospace;background:#0b1528;border:1px solid #1d3354;border-radius:6px;padding:2px 6px;color:#a8c0d8}
+</style>
+</head>
+<body>
+<header><h1>Bewijskracht‑checklist (interactief)</h1><div class="sub">Status bijhouden, filteren, exporteren. Lokaal opgeslagen.</div></header>
+<div class="container"><div class="panel">
+
+<div class="tabbar">
+  <button id="tab-checklist" class="primary">Checklist</button>
+  <button id="tab-hash" class="ghost">Hashregister</button>
+</div>
+
+<div id="view-checklist">
+  <div class="controls">
+    <input type="search" id="q" placeholder="Zoek in alle kolommen…">
+    <select id="statusFilter"><option value="">Status: alles</option><option>Te verzamelen</option><option>Te verifiëren</option><option>In behandeling</option><option>Compleet</option></select>
+    <select id="prioFilter"><option value="">Prioriteit: alles</option><option>Hoog</option><option>Middel-hoog</option><option>Middel</option><option>Laag</option></select>
+    <button id="exportCSV" class="ghost">Export CSV</button>
+    <div><div class="progress"><span id="progressBar"></span></div><div class="progress-label"><span id="progressText">0</span>% compleet</div></div>
+  </div>
+
+  <table id="tbl"><thead><tr>
+    <th data-k="Feit">Feit ⬍</th>
+    <th data-k="Huidig bewijs">Huidig bewijs</th>
+    <th data-k="Type">Type</th>
+    <th data-k="Ontbrekend document">Ontbrekend document</th>
+    <th data-k="Aanbevolen bron">Aanbevolen bron</th>
+    <th data-k="Status">Status</th>
+    <th data-k="Prioriteit">Prioriteit</th>
+    <th data-k="Bewijskracht (1-5)">Bewijskracht</th>
+    <th data-k="Aanpak (stap)">Aanpak</th>
+  </tr></thead><tbody></tbody></table>
+  <div style="margin-top:10px;display:flex;gap:10px;justify-content:flex-end">
+    <button id="reset" class="ghost">Reset filters</button>
+    <button id="print" class="primary">Print/PDF</button>
+  </div>
+</div>
+
+<div id="view-hash" class="hidden">
+  <div class="controls" style="grid-template-columns:1fr 180px 1fr;">
+    <input type="search" id="qHash" placeholder="Zoek bestand, hash of pad…">
+    <button id="exportHashCSV" class="ghost">Export CSV</button>
+    <div></div>
+  </div>
+  <table id="tblHash"><thead><tr>
+    <th data-k="Bestand">Bestand ⬍</th>
+    <th data-k="SHA-256">SHA‑256</th>
+    <th data-k="Grootte (bytes)">Grootte</th>
+    <th data-k="Laatste wijziging">Laatste wijziging</th>
+    <th data-k="Pad">Pad</th>
+  </tr></thead><tbody></tbody></table>
+</div>
+
+</div></div>
+<script>
+const RAW = {{
+  checklist: [],
+  hashes: []
+}};
+const $$ = s=>document.querySelector(s);
+let sortKey="Feit", sortAsc=true;
+
+function saveLocal(data){ localStorage.setItem("bewijskracht_v1", JSON.stringify(data)); }
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem("bewijskracht_v1")) || null; }catch(e){ return null; } }
+
+function getData(){
+  const base = RAW.checklist.slice();
+  const saved = loadLocal();
+  if(saved && Array.isArray(saved)) {
+    const map = new Map(saved.map(r=>[(r["Proof file"]||r["Feit"]), r]));
+    return base.map(r=> map.get(r["Proof file"]||r["Feit"]) || r);
+  }
+  return base;
+}
+
+function render(){
+  const data = getData();
+  const q = $$("#q").value.toLowerCase();
+  const fs = $$("#statusFilter").value;
+  const fp = $$("#prioFilter").value;
+  let rows = data.filter(r=>{
+    const blob = Object.values(r).join(" ").toLowerCase();
+    const okQ = !q || blob.includes(q);
+    const okS = !fs || (r["Status"]||"")===fs;
+    const okP = !fp || (r["Prioriteit"]||"")===fp;
+    return okQ && okS && okP;
+  });
+  rows.sort((a,b)=>{ const A=(a[sortKey]||"").toString().toLowerCase(); const B=(b[sortKey]||"").toString().toLowerCase(); return sortAsc?(A>B)-(A<B):(A<B)-(A>B); });
+  const tb = document.querySelector("#tbl tbody"); tb.innerHTML="";
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const td0=document.createElement("td"); td0.textContent=r["Feit"]||""; tr.appendChild(td0);
+    const td1=document.createElement("td"); td1.innerHTML = "<div>"+(r["Huidig bewijs"]||"")+"</div>" + (r["Proof file"]?("<div class='kbd'>"+r["Proof file"]+"</div>"):""); tr.appendChild(td1);
+    const td2=document.createElement("td"); td2.textContent=r["Type"]||""; tr.appendChild(td2);
+    const td3=document.createElement("td"); td3.textContent=r["Ontbrekend document"]||""; tr.appendChild(td3);
+    const td4=document.createElement("td"); td4.textContent=r["Aanbevolen bron"]||""; tr.appendChild(td4);
+    const td5=document.createElement("td");
+      const sel=document.createElement("select");
+      ["Te verzamelen","Te verifiëren","In behandeling","Compleet"].forEach(opt=>{ const o=document.createElement("option");o.value=opt;o.textContent=opt;if((r["Status"]||"")==opt)o.selected=true;sel.appendChild(o); });
+      const pill=document.createElement("span"); pill.className="status-pill status-"+(r["Status"]||"").replaceAll(" ","\ "); pill.textContent=r["Status"]||"";
+      sel.addEventListener("change",()=>{ r["Status"]=sel.value; pill.className="status-pill status-"+sel.value.replaceAll(" ","\ "); pill.textContent=sel.value; const all=getData(); const key=r["Proof file"]||r["Feit"]; const i=all.findIndex(x=>(x["Proof file"]||x["Feit"])===key); if(i>-1) all[i]=r; saveLocal(all); updateProgress(); });
+      td5.appendChild(sel); td5.appendChild(document.createElement("br")); td5.appendChild(pill);
+      tr.appendChild(td5);
+    const td6=document.createElement("td"); const b=document.createElement("span"); const pr=(r["Prioriteit"]||""); b.className="badge "+pr.toLowerCase().replace(" ","-"); b.textContent=pr; td6.appendChild(b); tr.appendChild(td6);
+    const td7=document.createElement("td"); td7.textContent=r["Bewijskracht (1-5)"]||""; tr.appendChild(td7);
+    const td8=document.createElement("td"); td8.textContent=r["Aanpak (stap)"]||""; tr.appendChild(td8);
+    tb.appendChild(tr);
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  const d=getData(); const done=d.filter(r=>r["Status"]==="Compleet").length; const total=d.length||1; const pct=Math.round(done/total*100);
+  $$("#progressText").textContent=pct; $$("#progressBar").style.width=pct+"%";
+}
+
+function toCSV(arr){
+  if(!arr.length) return "";
+  const cols=Object.keys(arr[0]); const esc=v=> (v==null?"":String(v).replace(/"/g,'""')); 
+  return [cols.map(c=>`"${esc(c)}"`).join(",")].concat(arr.map(r=>cols.map(k=>`"${esc(r[k])}"`).join(","))).join("\n");
+}
+function download(name, content, mime="text/plain"){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([content],{type:mime})); a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const VC = document.getElementById("view-checklist");
+  const VH = document.getElementById("view-hash");
+  document.getElementById("tab-checklist").addEventListener("click",()=>{VC.classList.remove("hidden");VH.classList.add("hidden");});
+  document.getElementById("tab-hash").addEventListener("click",()=>{VC.classList.add("hidden");VH.classList.remove("hidden");});
+
+  render();
+  $$("#q").addEventListener("input",render);
+  $$("#statusFilter").addEventListener("change",render);
+  $$("#prioFilter").addEventListener("change",render);
+  document.querySelectorAll("#tbl thead th").forEach(th=> th.addEventListener("click",()=>{sortKey=th.dataset.k; sortAsc=!sortAsc; render();}));
+  $$("#exportCSV").addEventListener("click",()=> download("Bewijskracht_Checklist_export.csv", toCSV(getData()), "text/csv"));
+  $$("#print").addEventListener("click",()=>window.print());
+  $$("#reset").addEventListener("click",()=>{ $$("#q").value=""; $$("#statusFilter").value=""; $$("#prioFilter").value=""; render(); });
+
+  // Hash view
+  const qh = $$("#qHash"); const tbH=document.querySelector("#tblHash tbody");
+  function renderHash(){
+    const q=(qh.value||"").toLowerCase(); tbH.innerHTML="";
+    RAW.hashes.filter(r=> !q || Object.values(r).join(" ").toLowerCase().includes(q)).forEach(r=>{
+      const tr=document.createElement("tr");
+      ["Bestand","SHA-256","Grootte (bytes)","Laatste wijziging","Pad"].forEach(k=>{ const td=document.createElement("td"); td.textContent=r[k]||""; tr.appendChild(td); });
+      tbH.appendChild(tr);
+    });
+  }
+  renderHash();
+  qh.addEventListener("input",renderHash);
+  $$("#exportHashCSV").addEventListener("click",()=> download("Hashregister_export.csv", toCSV(RAW.hashes), "text/csv"));
+});
+</script>
+</body></html>

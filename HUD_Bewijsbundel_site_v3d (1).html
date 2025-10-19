@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>HUD Bewijsbundel – v3</title>
+<meta name="color-scheme" content="dark light"/>
+<style>
+:root{
+  --bg:#000713;
+  --panel:rgba(0,22,44,0.45);
+  --panel-strong:rgba(0,32,64,0.65);
+  --accent:#00eaff;
+  --accent2:#2aa9ff;
+  --text:#cfefff;
+  --muted:#78cde0;
+  --warning:#ffd166;
+  --danger:#ff6b6b;
+  --success:#29ffa3;
+  --shadow:0 0 18px rgba(0,234,255,0.4), inset 0 0 12px rgba(0,234,255,0.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:linear-gradient(180deg,#000713,#001226 35%,#000713);color:var(--text);font:15px/1.45 system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+header{
+  position:sticky;top:0;z-index:10;
+  background:rgba(0,10,20,0.75);backdrop-filter: blur(8px);
+  border-bottom:1px solid rgba(0,234,255,0.25);
+}
+.container{max-width:1200px;margin:0 auto;padding:16px}
+.hud-title{display:flex;align-items:baseline;gap:12px}
+.hud-title h1{margin:0;font-weight:700;letter-spacing:0.4px}
+.badge{border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:999px;font-size:12px;background:rgba(0,234,255,0.08)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{
+  border:1px solid rgba(0,234,255,0.35);
+  background:rgba(0,22,44,0.55);
+  color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;
+  box-shadow: var(--shadow);
+}
+button:hover{border-color:var(--accent);}
+main{padding:24px 0}
+.section{
+  margin:18px 0;padding:16px;border:1px solid rgba(0,234,255,0.18);
+  background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+}
+.section h2{margin:0 0 10px 0;font-size:18px;color:#eaffff}
+.section .content{padding:6px 4px}
+.table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.table th,.table td{padding:10px 12px;text-align:left}
+.table th{color:#e8fbff;border-bottom:1px solid rgba(0,234,255,0.25)}
+.row{background:rgba(0,20,40,0.6);border:1px solid rgba(0,234,255,0.14)}
+.row td{border-top:1px solid rgba(0,234,255,0.06);border-bottom:1px solid rgba(0,234,255,0.06)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.kv .card{padding:12px;border:1px solid rgba(0,234,255,0.18);background:var(--panel-strong);border-radius:14px}
+.metric{display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(0,234,255,0.18);border-radius:12px;padding:10px;background:rgba(0,20,40,0.55);margin:6px 0}
+.metric .bar{height:8px;border:1px solid rgba(0,234,255,0.2);border-radius:999px;flex:1;margin-left:12px;overflow:hidden}
+.metric .bar>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%}
+.footer-note{opacity:0.8;font-size:12px;margin-top:16px}
+.nav{
+  display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0 0
+}
+.nav a{padding:6px 10px;border:1px solid rgba(0,234,255,0.25);border-radius:8px;background:rgba(0,22,44,0.45)}
+code, pre{color:#d0faff}
+/* Print styles */
+@media print{
+  :root{--text:#001226}
+  html,body{background:white;color:black}
+  header{display:none}
+  .section{page-break-inside:avoid;background:white;border-color:#89c4ff;box-shadow:none}
+  .section h2{color:#003b6e}
+  a{color:#003b6e}
+  .table th{color:#003b6e;border-color:#89c4ff}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="hud-title">
+      <h1 id="metaTitle">HUD – Bewijsbundel</h1>
+      <span class="badge" id="metaBadge">v3</span>
+      <span class="badge" id="metaDate">—</span>
+    </div>
+    <div class="toolbar">
+      <button onclick="window.print()">🖨️ Print / PDF</button>
+      <button onclick="exportJSON()">⇩ Export JSON</button>
+      <button onclick="exportHTML()">⇩ Download HTML</button>
+    </div>
+    <div class="nav" id="nav"></div>
+  </div>
+</header>
+<main class="container" id="main"></main>
+<footer class="container footer-note">
+  Juridisch printvriendelijk profiel via @media print — marges 2 cm, paginanummers via uw PDF-printer.
+</footer>
+<script>
+
+const DATA = {"meta": {"title": "Kristof Huibers – Waarheidsdossier & Communicatieherstel", "export_date": "2025-10-16 16:58", "jurisdiction": "België", "version": "v3 · 2025-10-16c", "notes": "Interactieve HUD-visualisatie + printvriendelijke juridische weergave."}, "sections": [{"id": 1, "title": "📝 Narratieve Samenvatting", "content": {"type": "text", "text": "Context & Keten — **H.28 → H.34 → H.40 → H.41–H.53**.
+
+• H.28: Ongeautoriseerde meldingen en apparaattoegang vormen de technische ingang voor framing. Kristof documenteert timestamps en hash‑keten. 
+Manipulatie 
+Bewijs
+• H.34: Sleutelzin: “Ik wil het verhaal niet horen. Ik geloof Ann 100%.” → afwijzing van hoor‑en‑wederhoor; Kristof documenteert weerlegging. 
+• H.40: Standpunt verhardt; causale link H.28→H.34 bevestigd in het verloop.
+
+Nieuwe aanvullingen (H.47–H.53) bevestigen: ingebrekestelling (14/10/2025), mails Yolanda (08/2024–02/2025),
+screenshot-ontkenning (04/12/2023 vs “januari”), 50-feiten-bewijstabel, advocaatbrief (pro-deo),
+en een precedent (Noel/Steve) — structurele laster- en projectiepatronen."}}, {"id": 2, "title": "⚖️ Juridische Bewijstabel", "content": {"type": "table", "headers": ["Feit", "Bron", "Bewijskracht", "Wet", "Code"], "rows": [["E-mailintrusie / Pushbullet", "H.28 – logs & screenshots", "Hoog", "Art. 550bis/ter Sw.; 460 Sw.", "🔴"], ["Doorsturen privécommunicatie", "H.28/H.34 – OCR/WhatsApp", "Middel", "Art. 460 Sw.; 314bis Sw.", "🔵"], ["Afwijzing wederhoor ('Ik geloof Ann 100%')", "H.34 – WhatsApp 13/12/2024", "Hoog", "EVRM art. 6 (context) + 443–444 Sw.", "🔴"], ["Causale keten manipulatie", "H.40 – synthese", "Middel", "442bis Sw.; 443–445 Sw.", "🟡"], ["Ingebrekestelling en verzoek verzoeningszitting", "H.47 – Bundel A+B 14/10/2025", "Hoog", "Ger.W. art. 731", "🟢"], ["50-feiten-bewijstabel", "H.50 – 50 verifieerbare feiten", "Hoog", "Diverse (442bis, 443–445, 194–197, 496, 314bis)", "🟢"], ["Yolanda-mails (framing/triangulatie)", "H.49 – mails 08/2024–02/2025", "Middel", "443 – 444 Sw.", "🔵"], ["Screenshot 04/12/2023 vs. ontkenning 'januari'", "H.51 – analyse screenshot", "Hoog", "Art. 194–197 Sw.", "🔴"], ["Advocaat – pro-deo & medische nood", "H.52 – brief", "Ondersteunend", "Context (procespositie)", "🟡"], ["Precedent valse relatieclaims", "H.53 – Noel/Steve", "Ondersteunend", "443–445 Sw. (patroon)", "🔴"], ["Persoonlijke kernverklaring & chronologie", "H.54 – 0.odt", "Ondersteunend", "Context | 1382 BW (schade)", "🟡"], ["Masterdossier structuur & strategie", "H.55 – 1.odt", "Ondersteunend", "Diverse (442bis, 443–444, 496)", "🟢"], ["Getuigenis noodtoestand (emotionele staat)", "H.56 – 2.odt", "Ondersteunend", "Context | EVRM art. 8 (privéleven)", "🟡"], ["WhatsApp-log maart 2025 (blokkeer/deblokkeer, beschuldigingen)", "H.57 – 4.odt", "Hoog (directe log)", "Art. 443–444 Sw. (reputatie) | 442bis (belaging)", "🔴"], ["Gespreksanalyse 06-03 t/m 08-08-2025 (1838 msg)", "H.58 – 5.odt", "Middel (afgeleid)", "Context bewijspatroon", "🟢"], ["Schadevergoeding-voorbeeld (persbericht/dossier)", "H.59 – 18.odt", "Ondersteunend", "Schadebegroting | Slachtofferfonds", "🟡"], ["Brief aan Yolanda (wederhoor/transparantie)", "H.60 – 19.odt", "Ondersteunend", "Schriftelijk wederhoor", "🟢"], ["Media-index (WhatsApp-foto’s 2022–2024)", "H.61 – 20.odt", "Ondersteunend (drager)", "Chain of Custody / chronologie", "🟢"], ["Infografisch schema (ODG)", "H.62 – 0.odg", "Ondersteunend", "Visualisatie dossierstructuur", "🟢"]]}}, {"id": 3, "title": "☑️ Checklist Actiepunten", "content": {"type": "check", "items": [["Hashing & archivering", true], ["Forensische image", false], ["Provider‑log opvragen", false], ["Verzoeningszitting voorbereiden", true], ["Strafklacht Ann (443–445/442bis)", true], ["Civiele vordering 1382 BW", true]]}}, {"id": 4, "title": "🕰️ Tijdlijn", "content": {"type": "table", "headers": ["Datum", "Event", "Toelichting"], "rows": [["04/12/2023", "Screenshot 'Anne-profiel' (H.51)", "Bewijs zoekactie + ontkenning"], ["08/08/2024", "Mail 'messen in uwe rug' (H.49)", "Emotionele escalatie"], ["12/02/2025", "Yolanda → advocaat (H.49)", "Triangulatie/druk"], ["07/2025", "50-feiten-bewijstabel gecompileerd (H.50)", "Consolidatie"], ["14/10/2025", "Ingebrekestellingen + verzoek Vredegerecht (H.47)", "Formele processtap"], ["03/2025", "WhatsApp-escalatie & blokkeren/deblokkeren", "H.57 – 4.odt"], ["06–08/2025", "Gespreksanalyse (1838 berichten)", "H.58 – 5.odt"], ["05/12/2024", "Artikel schadevergoeding (vergelijkingspunt)", "H.59 – 18.odt"], ["2022–2024", "WhatsApp media-index (beelden)", "H.61 – 20.odt"]]}}, {"id": 5, "title": "🗂️ Indexkaart", "content": {"type": "table", "headers": ["Code", "Type", "Notitie"], "rows": [["H.28‑PB‑01", "Android/Pushbullet", "sha256:…"], ["H.34‑A", "Communicatiebewijs", "Sleutelzin: 'Ik geloof Ann 100%'"], ["H.40‑SYN‑01", "Synthese", "Causale link"], ["H.47‑VERZ‑01", "Ger.W. 731", "Ingebrekestelling + verzoek"]]}}, {"id": 6, "title": "📊 Risico & Kansen Matrix", "content": {"type": "table", "headers": ["Impact", "Kans", "Omschrijving", "Markering"], "rows": [["Hoog", "Hoog", "Privacy‑inbreuk & framing", "🔴"], ["Middel", "Hoog", "Reputatieschade", "🟡"], ["Hoog", "Middel", "Gerechtelijke klaring (via zitting)", "🟢"]]}}, {"id": 7, "title": "🎨 Infografiek‑blokken", "content": {"type": "list", "items": ["Pijl: Device → Pushbullet → Derde", "Badge: 'causale keten' H.28 → H.34 → H.40", "Markering: H.47 'proces‑trigger'"]}}, {"id": 8, "title": "📖 Storymap", "content": {"type": "list", "items": ["Toegang → Monitoring → Selectie & framing → Confrontatie → Escalatie → Formele zitting"]}}, {"id": 9, "title": "📈 Dashboard", "content": {"type": "metrics", "items": [["Technische betrouwbaarheid", 95], ["Keten‑integriteit", 88], ["Manipulatie‑detectie", 84], ["Herstelkans", 28]]}}, {"id": 10, "title": "🌐 Mindmap", "content": {"type": "list", "items": ["Techniek", "Narratief", "Juridisch", "Emotioneel"]}}, {"id": 11, "title": "📚 Bronnenregister", "content": {"type": "table", "headers": ["Code", "Doc", "Datum", "Hash"], "rows": [["PB‑01", "Screenshot hub", "2023‑09", "sha256:…"], ["B‑13/24‑1", "WhatsApp‑screenshot", "2024‑12‑13", "sha256:…"], ["H40‑S1", "Synthese memo", "2025‑07", "sha256:…"]]}}, {"id": 12, "title": "🔒 Chain of Custody", "content": {"type": "coc", "items": [{"file": "AANGEVULDE VERKLARING – Nicole Vanr.txt", "sha256": "5c21d8a353c67e2312007bdb1bbf5361d96edb39068f08f7a99bc4aa268ebf1d", "size": 9440}, {"file": "Dus dan vangt hij mij verder op. Da.txt", "sha256": "6857517902514e937dfa726dc56bdacbddf18ae64044ef7068933361f2977c90", "size": 140956}, {"file": "UITLEG NAAR MAGISTRAAT.txt", "sha256": "aa575cd7e659c82f4780223d21a1c9320edaef47ea272fd56471e48c2eb89417", "size": 140969}, {"file": "VERDUILIJK DEZE 2022 11  MET BOODSCHAP WIL VER.png", "sha256": "8b2cafebe57f5861c5012661a15470d50ac28410125815a6d9873abadf9e3ebe", "size": 127237}, {"file": "Gegenereerde json.txt adovaat betalen.txt", "sha256": "ba541b1ae5c482220e5d0bf83abdb0166d4edf3179a44abd85b36cd6841cf079", "size": 3364}, {"file": "VERKLARING ANN.pdf", "sha256": "d87770240358abd7adc1428ffcb20f4891ecd3a05282c2ca1fc2d34313f1ef57", "size": 1719419}, {"file": "verklaring mamam.pdf", "sha256": "69b88fe8c7e43d5527f33221ed4a49ecb3b2813dd113b4cbc776df5204cf1fa1", "size": 1719313}, {"file": "Geen titel 18.pdf", "sha256": "fe609aba895dd578b30263591bc6e49a60df3d2c0b7e3320ecb3392b4695b0ba", "size": 46643}, {"file": "Bundel_ABmails_2025-10-14.pdf", "sha256": "1ebfeb78f45e7b2997e4907593aa9b1bd5f23eea811c5543b76cd8652f8c1a62", "size": 2853077}, {"file": "33.odt", "sha256": "cc998332e74fa7873fe8973a7200aef16f5924fd073212f1464de3502dce8fe1", "size": 55400}, {"file": "34.odt", "sha256": "f0fda600915f63f5f2716c806d453df707e092caf898acf51ff023d43458fd95", "size": 37163}, {"file": "35.odt", "sha256": "c4b4228615c694762f655cce6ab51b40bfbf10e9a6806c08243390e831cc9977", "size": 50547}, {"file": "36.odt", "sha256": "9e3ba5dc5d4d2f7f41dd0609031cdb47bda6e354084168b2bfaa4b7a8d0b80dc", "size": 40802}, {"file": "37.odt", "sha256": "eab901c8d8fff980c587c34cf02672c355af3c27d86187a750c39f339fbc955b", "size": 54148}, {"file": "38.odt", "sha256": "7a1c10014a372021c526c64f136d90434a6ecb65e9d9cd2f5038fba31374b8b5", "size": 44889}, {"file": "HUD_Dossier.json", "sha256": "b933aa90d0442a488ade2dbf2792855073f1e4bb7265338f3604fe2aee58a1bb", "size": 14218}, {"file": "HUD_Bewijsbundel.json", "sha256": "a282419bf116b9465a223e4027be316ab169bbe43f987d0887f504246593b64d", "size": 5301}, {"file": "HUD_Bewijsbundel_site.html", "sha256": "265bf382c6356d19a430542c8e137c2c07c70b375b95a817988295ce16150884", "size": 9959}]}}, {"id": 13, "title": "👥 Getuigenmatrix", "content": {"type": "table", "headers": ["Naam", "Relatie", "Verklaring", "Betrouwbaarheid"], "rows": [["Vera Martens", "Justitieassistent", "Sturing/triangulatie bevestigd", "🟢"], ["Nicole Vanr.", "Moeder", "Directe waarneming druk & inmenging", "🟢"], ["Ann Coenen", "Derde", "Beschuldigingen zonder bewijs", "⚠️"], ["Yolanda D.", "Ex-partner", "Afwijzing wederhoor; inconsistent", "⚠️"]]}}, {"id": 14, "title": "📜 Artikelenmapping", "content": {"type": "table", "headers": ["Artikel", "Omschrijving"], "rows": [["442bis Sw.", "Belaging"], ["443–445 Sw.", "Laster / lasterlijke aangifte"], ["194–197 Sw.", "Valse verklaringen / valsheid"], ["496 Sw.", "Oplichting"], ["314bis Sw.", "Privacyschending"], ["460 Sw.", "Briefgeheim"], ["1382 BW", "Burgerlijke aansprakelijkheid"], ["Ger.W. 731", "Verzoek verzoeningszitting"]]}}, {"id": 15, "title": "🧩 Conclusie & Aanbevelingen", "content": {"type": "list", "items": ["Vergrendel keten: hashes + canonieke versies per bijlage.", "Start strafklacht tegen Ann (442bis, 443–445).", "Bereid civiele vordering voor (1382 BW).", "Voer verzoeningszitting: stop laster, communicatiekanaal, rectificaties."]}}, {"id": 16, "title": "🔍 Verificatie‑log", "content": {"type": "table", "headers": ["Datum", "Stap", "Door"], "rows": [["2023‑10", "Hashing initieel H.28", "Kristof"], ["2024‑01", "Externe controle", "Advocaat"], ["2025‑09", "Ketenreview v2.0", "Peer review"], ["2025‑10‑16", "Integratie H.47–H.53", "Kristof + GPT‑5"]]}}, {"id": 17, "title": "📎 Bijlagenindex", "content": {"type": "list", "items": ["H.28 – Pushbullet", "H.34 – Bericht 13/12/2024", "H.40 – Juridische opvolging", "H.41 – Aangevulde verklaring Nicole Vanr.", "H.42 – Uitleg naar magistraat", "H.43 – Transcript 'Dus dan vangt hij mij verder op'", "H.44 – Screenshot verduidelijking 2022‑11", "H.45 – Advocaatbetaling (OCR)", "H.46 – Verklaring Ann / Verklaring mama / Geen titel 18.pdf", "H.47 – Bundel A+B mails (14/10/2025)", "H.48 – Structuur hoofddossier (33.odt)", "H.49 – Analyse Yolanda-mails (34.odt)", "H.50 – 50-feiten-bewijstabel (35.odt)", "H.51 – Screenshot-ontkenning 04/12/2023 (36.odt)", "H.52 – Brief aan advocaat (37.odt)", "H.53 – Precedent Noel/Steve (38.odt)"]}}, {"id": 18, "title": "🧮 Schadeberekening", "content": {"type": "table", "headers": ["Post", "Bedrag"], "rows": [["Privacy‑schade", "€ 7.500"], ["Reputatieschade", "€ 12.500"], ["Tijdverlies (300u)", "€ 6.000"], ["Kosten juridisch/medisch", "€ 3.100"]]}}, {"id": 19, "title": "🧠 Cognitieve Analyse", "content": {"type": "list", "items": ["Ann: narcistische/controle‑trekken; gaslighting; projectie.", "Yolanda: splitting; confirmation loop; dissonantie.", "Kristof: bewijsgericht; loyaliteit; stress‑respons.", "Precedent (Noel/Steve): herhalingspatroon lasterlijke relatieclaims.", "Diagnostisch patroon: DARVO → escalatie → juridische consolidatie."]}}, {"id": 20, "title": "🧭 Juridische Routekaart", "content": {"type": "table", "headers": ["Termijn", "Actie"], "rows": [["KT", "Preservatie + verzoeningszitting (Ger.W. 731)"], ["MT", "Strafklacht Ann (442bis/443–445) + civiele vordering (1382 BW)"], ["LT", "Monitoring + rectificaties + reputatieherstel"]]}}], "bijlagen": ["H.28 – Pushbullet", "H.34 – Bericht 13/12/2024", "H.40 – Juridische opvolging", "H.41 – Aangevulde verklaring Nicole Vanr.", "H.42 – Uitleg naar magistraat", "H.43 – Transcript 'Dus dan vangt hij mij verder op'", "H.44 – Screenshot verduidelijking 2022‑11", "H.45 – Advocaatbetaling (OCR)", "H.46 – Verklaring Ann / Verklaring mama / Geen titel 18.pdf", "H.47 – Bundel A+B mails (14/10/2025)", "H.48 – Structuur hoofddossier (33.odt)", "H.49 – Analyse Yolanda-mails (34.odt)", "H.50 – 50-feiten-bewijstabel (35.odt)", "H.51 – Screenshot-ontkenning 04/12/2023 (36.odt)", "H.52 – Brief aan advocaat (37.odt)", "H.53 – Precedent Noel/Steve (38.odt)", "H.54 – Persoonlijke kernverklaring (0.odt)", "H.55 – Masterdossier structuur/strategie (1.odt)", "H.56 – Getuigenis noodtoestand (2.odt)", "H.57 – WhatsApp-log Maart 2025 (4.odt)", "H.58 – Gespreksanalyse 1838 berichten (5.odt)", "H.59 – Schadevergoeding-voorbeeld (18.odt)", "H.60 – Brief aan Yolanda (19.odt)", "H.61 – WhatsApp media-index (20.odt)", "H.62 – Infografische ODG (0.odg)"], "chain_of_custody": [{"file": "AANGEVULDE VERKLARING – Nicole Vanr.txt", "sha256": "5c21d8a353c67e2312007bdb1bbf5361d96edb39068f08f7a99bc4aa268ebf1d", "size": 9440}, {"file": "Dus dan vangt hij mij verder op. Da.txt", "sha256": "6857517902514e937dfa726dc56bdacbddf18ae64044ef7068933361f2977c90", "size": 140956}, {"file": "UITLEG NAAR MAGISTRAAT.txt", "sha256": "aa575cd7e659c82f4780223d21a1c9320edaef47ea272fd56471e48c2eb89417", "size": 140969}, {"file": "VERDUILIJK DEZE 2022 11  MET BOODSCHAP WIL VER.png", "sha256": "8b2cafebe57f5861c5012661a15470d50ac28410125815a6d9873abadf9e3ebe", "size": 127237}, {"file": "Gegenereerde json.txt adovaat betalen.txt", "sha256": "ba541b1ae5c482220e5d0bf83abdb0166d4edf3179a44abd85b36cd6841cf079", "size": 3364}, {"file": "VERKLARING ANN.pdf", "sha256": "d87770240358abd7adc1428ffcb20f4891ecd3a05282c2ca1fc2d34313f1ef57", "size": 1719419}, {"file": "verklaring mamam.pdf", "sha256": "69b88fe8c7e43d5527f33221ed4a49ecb3b2813dd113b4cbc776df5204cf1fa1", "size": 1719313}, {"file": "Geen titel 18.pdf", "sha256": "fe609aba895dd578b30263591bc6e49a60df3d2c0b7e3320ecb3392b4695b0ba", "size": 46643}, {"file": "Bundel_ABmails_2025-10-14.pdf", "sha256": "1ebfeb78f45e7b2997e4907593aa9b1bd5f23eea811c5543b76cd8652f8c1a62", "size": 2853077}, {"file": "33.odt", "sha256": "cc998332e74fa7873fe8973a7200aef16f5924fd073212f1464de3502dce8fe1", "size": 55400}, {"file": "34.odt", "sha256": "f0fda600915f63f5f2716c806d453df707e092caf898acf51ff023d43458fd95", "size": 37163}, {"file": "35.odt", "sha256": "c4b4228615c694762f655cce6ab51b40bfbf10e9a6806c08243390e831cc9977", "size": 50547}, {"file": "36.odt", "sha256": "9e3ba5dc5d4d2f7f41dd0609031cdb47bda6e354084168b2bfaa4b7a8d0b80dc", "size": 40802}, {"file": "37.odt", "sha256": "eab901c8d8fff980c587c34cf02672c355af3c27d86187a750c39f339fbc955b", "size": 54148}, {"file": "38.odt", "sha256": "7a1c10014a372021c526c64f136d90434a6ecb65e9d9cd2f5038fba31374b8b5", "size": 44889}, {"file": "HUD_Dossier.json", "sha256": "b933aa90d0442a488ade2dbf2792855073f1e4bb7265338f3604fe2aee58a1bb", "size": 14218}, {"file": "HUD_Bewijsbundel.json", "sha256": "a282419bf116b9465a223e4027be316ab169bbe43f987d0887f504246593b64d", "size": 5301}, {"file": "HUD_Bewijsbundel_site.html", "sha256": "265bf382c6356d19a430542c8e137c2c07c70b375b95a817988295ce16150884", "size": 9959}, {"file": "0.odg", "sha256": "f052d21d3ae37b5a2a51880aafc1c03743a23c6fb6c2875ac5cba30059827c7a", "size": 187921}, {"file": "0.odt", "sha256": "05aafd2af22d034ba67754884be3fcceec6804820c8a81f41ef2180d714ae413", "size": 403222}, {"file": "1.odt", "sha256": "fbebed8bd4e9567ae500e60fa2b42568bb1538ae7bbd203301771d2c3e15045d", "size": 649052}, {"file": "2.odt", "sha256": "1f7d72e35ffd6293e0a8f0089d925fff4b7ca1e2853b5c3cedeb6271ba2beb66", "size": 31602}, {"file": "4.odt", "sha256": "55d5bb05a17af94c8191b68a80fb2b668626b650ce666ebedb527fd938c98f1b", "size": 548523}, {"file": "5.odt", "sha256": "1b800847ca7b22ddc94a057bfc25a53baa8b8c2f0b2870be6647a82724ccf1c7", "size": 58237}, {"file": "18.odt", "sha256": "7325a81e4ed4516518fe24b791fb9e997a0e8f70144bf0f4c70495e1cafcd6d0", "size": 204241}, {"file": "19.odt", "sha256": "06dbf5696e5415893fd371dfa320f3385eeab75d5477ad8ed504aef72aca9f93", "size": 45822}, {"file": "20.odt", "sha256": "89bfe61dc440757ff5e4233b1c43fa6084201a0167a759c64bae145f60105015", "size": 14098841}]};
+const el = (tag, attrs={}, children=[])=>{
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') e.className=v;
+    else if(k==='html') e.innerHTML=v;
+    else e.setAttribute(k,v);
+  });
+  children.forEach(c=> e.appendChild(c));
+  return e;
+};
+
+function render(){
+  document.getElementById('metaTitle').textContent = DATA.meta.title;
+  document.getElementById('metaBadge').textContent = DATA.meta.version;
+  document.getElementById('metaDate').textContent = DATA.meta.export_date;
+
+  const nav = document.getElementById('nav');
+  const main = document.getElementById('main');
+
+  DATA.sections.forEach(sec=>{
+    const anchorId = 'sec'+sec.id;
+    const link = el('a', {href:'#'+anchorId}, [document.createTextNode(sec.title)]);
+    nav.appendChild(link);
+
+    const box = el('section', {class:'section', id:anchorId}, [
+      el('h2', {}, [document.createTextNode(`${sec.id}. ${sec.title}`)]),
+      el('div', {class:'content'})
+    ]);
+    main.appendChild(box);
+
+    const c = box.querySelector('.content');
+    const content = sec.content || {};
+
+    if(content.type === 'text'){
+      c.innerHTML = content.text
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/`(.+?)`/g,'<code>$1</code>')
+        .replace(/\n/g,'<br>');
+    }else if(content.type === 'table'){
+      const table = el('table',{class:'table'});
+      const thead = el('thead',{},[el('tr',{}, content.headers.map(h=> el('th',{},[document.createTextNode(h)]))) ]);
+      table.appendChild(thead);
+      const tbody = el('tbody',{});
+      content.rows.forEach(r=>{
+        const tr = el('tr',{class:'row'});
+        r.forEach(cell=> tr.appendChild(el('td',{},[document.createTextNode(cell)])));
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      c.appendChild(table);
+    }else if(content.type === 'check'){
+      const list = el('div',{class:'kv'});
+      content.items.forEach(([label,done])=>{
+        const card = el('div',{class:'card'},[
+          el('div',{html: (done?'✅ ':'⬜ ') + label })
+        ]);
+        list.appendChild(card);
+      });
+      c.appendChild(list);
+    }else if(content.type === 'list'){
+      const ul = el('ul',{});
+      content.items.forEach(item=> ul.appendChild(el('li',{},[document.createTextNode(item)])));
+      c.appendChild(ul);
+    }else if(content.type === 'metrics'){
+      content.items.forEach(([label,val])=>{
+        const m = el('div',{class:'metric'},[
+          el('div',{},[document.createTextNode(label)]),
+          el('div',{class:'bar'},[ el('div',{style:`width:${val}%`},[]) ]),
+          el('div',{},[document.createTextNode(val+'%')])
+        ]);
+        c.appendChild(m);
+      });
+    }else if(content.type === 'coc'){
+      const table = el('table',{class:'table'});
+      const headers = ["Bestand","SHA-256","Grootte (bytes)","Status"];
+      const thead = el('thead',{},[el('tr',{}, headers.map(h=> el('th',{},[document.createTextNode(h)]))) ]);
+      const tbody = el('tbody',{});
+      (content.items||[]).forEach(it=>{
+        const status = it.missing ? "❌ ontbreekt" : (it.sha256 ? "✅ gehashd" : "⚠️");
+        const tr = el('tr',{class:'row'});
+        const cells = [it.file || "", it.sha256 || "", (it.size||"") + "", status];
+        cells.forEach(cell=> tr.appendChild(el('td',{},[document.createTextNode(cell)])));
+        tbody.appendChild(tr);
+      });
+      table.appendChild(thead); table.appendChild(tbody);
+      c.appendChild(table);
+    }
+  });
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(DATA,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'HUD_Bewijsbundel_v20251016b.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 400);
+}
+
+function exportHTML(){
+  const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'HUD_Bewijsbundel_site_v3.html';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 400);
+}
+
+document.addEventListener('DOMContentLoaded', render);
+
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    // Update version and export date badges
+    var badge = document.getElementById('metaBadge');
+    if(badge) badge.textContent = 'v3d · 2025-10-16d';
+    var dt = document.getElementById('metaDate');
+    if(dt) dt.textContent = '2025-10-16 17:05';
+
+    // Add nav link
+    var nav = document.getElementById('nav');
+    if(nav) {
+      var a = document.createElement('a');
+      a.href = '#sec63';
+      a.textContent = '🧮 Interactieve Kosten & Kerncijfer (H.63)';
+      nav.appendChild(a);
+    }
+
+    // Add new section
+    var main = document.getElementById('main');
+    if(main && !document.getElementById('sec63')) {
+      var sec = document.createElement('section');
+      sec.className = 'section';
+      sec.id = 'sec63';
+      var h2 = document.createElement('h2');
+      h2.textContent = '63. 🧮 Interactieve Kosten & Kerncijfer (H.63)';
+      var content = document.createElement('div');
+      content.className = 'content';
+      content.innerHTML = [
+        "<p>Deze sectie biedt directe toegang tot de interactieve berekeningsmodule <strong>hud_neon_dossier_website_single_file_html (2).html</strong> — een neon‑HUD‑tool voor kosten, BTW en kerncijfers.</p>",
+        "<p><a href='hud_neon_dossier_website_single_file_html (2).html' target='_blank' style='color:#00eaff;font-weight:bold;'>🧮 Open de Interactieve Berekeningstool (nieuw venster)</a></p>",
+        "<p><em>SHA-256:</em> bf92cbe401e00463732b1e2da927f4cb57cac756c631bb146838000231327f5f — <em>grootte:</em> 20660 bytes</p>"
+      ].join("");
+      sec.appendChild(h2);
+      sec.appendChild(content);
+      main.appendChild(sec);
+    }
+
+    // Patch Chain of Custody table (sec12) with the calculator file
+    var cocTbody = document.querySelector('#sec12 .content table tbody');
+    if(cocTbody) {
+      var tr = document.createElement('tr');
+      tr.className = 'row';
+      ['hud_neon_dossier_website_single_file_html (2).html', 'bf92cbe401e00463732b1e2da927f4cb57cac756c631bb146838000231327f5f', String(20660), '✅ gehashd'].forEach(function(txt){
+        var td = document.createElement('td'); td.textContent = txt; tr.appendChild(td);
+      });
+      cocTbody.appendChild(tr);
+    }
+  } catch(e) {
+    console.error('HUD v3d patch failed:', e);
+  }
+});
+</script>
+
+</body>
+</html>

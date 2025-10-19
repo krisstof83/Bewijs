@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kristof 2025 · BEWIJSBUNDEL – ALLES (V1)</title>
+<meta name="color-scheme" content="dark light" />
+<style>
+:root{--bg:#000713;--panel:rgba(0,22,44,.55);--panel-strong:rgba(0,32,64,.7);--text:#b7f3ff;--muted:#7ed0e6;--accent:#00eaff;--accent2:#2aa9ff;--good:#29ffa3;--warn:#ffd166;--bad:#ff6b6b}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+header{position:sticky;top:0;z-index:9;background:linear-gradient(180deg,rgba(0,32,64,.95),rgba(0,32,64,.6));border-bottom:1px solid var(--accent);backdrop-filter:blur(8px)}
+.header-inner{max-width:1200px;margin:0 auto;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.h-title{margin:0;color:var(--accent);font-weight:800}
+.h-sub{margin:2px 0 0;color:var(--muted);font-size:12px}
+.btnbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--accent2);color:#001629;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;box-shadow:0 0 12px rgba(0,234,255,.35)}
+.btn:active{transform:translateY(1px)}
+main{max-width:1200px;margin:14px auto 80px;padding:0 16px}
+.panel{background:var(--panel);border:1px solid var(--accent);border-radius:14px;box-shadow:0 0 14px rgba(0,234,255,.2);margin:12px 0}
+.panel h2{margin:0;padding:12px 14px;color:var(--accent);font-size:18px;border-bottom:1px solid rgba(0,234,255,.2)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.input{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--accent2);border-radius:10px;padding:8px 10px;color:var(--text)}
+select.input{padding-right:28px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid rgba(0,234,255,.15);padding:8px 10px;text-align:left;vertical-align:top}
+.badge{padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.25);font-size:11px}
+.b-red{border-color:var(--bad);color:var(--bad)}.b-yellow{border-color:var(--warn);color:var(--warn)}.b-green{border-color:var(--good);color:var(--good)}.b-blue{border-color:var(--accent2);color:var(--accent2)}
+.small{color:var(--muted);font-size:12px}
+.grid{display:grid;gap:14px}
+@media(min-width:980px){.grid{grid-template-columns:1fr 1fr}}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gallery img, video, audio{width:100%;border-radius:10px;border:1px solid rgba(0,234,255,.25)}
+mark{background:rgba(41,255,163,.18);color:#eafff6;border:1px solid rgba(41,255,163,.38);border-radius:6px;padding:0 4px}
+.note{background:rgba(0,22,44,.35);border:1px dashed rgba(0,234,255,.25);border-radius:10px;padding:8px 10px;margin:8px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div>
+      <h1 class="h-title">BEWIJSBUNDEL – ALLES (V1)</h1>
+      <p class="h-sub">Kristof 2025 · Waarheidsdossier & Communicatieherstel · Geconsolideerde bundel van alle aangeleverde bestanden (PDF, IMG, AUDIO, VIDEO)</p>
+    </div>
+    <div class="btnbar">
+      <button class="btn" id="btnPrint">Print / PDF</button>
+      <button class="btn" id="btnHTML">Download HTML</button>
+      <button class="btn" id="btnJSON">Export JSON</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="controls">
+    <input id="q" class="input" placeholder="Zoek op bestandsnaam, thema of notitie…" />
+    <select id="byType" class="input">
+      <option value="">Filter op type</option>
+      <option>PDF</option><option>IMG</option><option>AUDIO</option><option>VIDEO</option><option>HTML</option>
+    </select>
+    <select id="byCode" class="input">
+      <option value="">Filter op code</option>
+      <option value="🟢">🟢 ondersteunend</option>
+      <option value="🔵">🔵 manipulatie</option>
+      <option value="🔴">🔴 strafbaar</option>
+      <option value="🟡">🟡 emotie/context</option>
+    </select>
+  </div>
+
+  <section class="panel">
+    <h2>01. Master Bewijsregister</h2>
+    <div class="note small">Alle items zijn gelinkt naar je lokale pad. Audio/Video kan in deze viewer beperkt afspelen. Bij problemen: open via je bestandsbeheer.</div>
+    <table class="table" id="tbl"></table>
+  </section>
+
+  <section class="panel">
+    <h2>02. Juridische Bewijstabel</h2>
+    <table class="table" id="facts"></table>
+  </section>
+
+  <section class="panel">
+    <h2>03. Screenshots – Snelle galerij</h2>
+    <div class="gallery" id="gal"></div>
+  </section>
+
+  <section class="panel">
+    <h2>04. Audio/Video – Referentie</h2>
+    <div class="grid">
+      <div>
+        <h3>Audio</h3>
+        <div id="audios"></div>
+      </div>
+      <div>
+        <h3>Video</h3>
+        <div id="videos"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>05. Routekaart & Export</h2>
+    <ol class="small">
+      <li>Bewijsregister exporteren (JSON) voor archivering.</li>
+      <li>Print‑vriendelijke versie genereren (Print/PDF).</li>
+      <li>Juridische bewijstabel toevoegen als bijlage in processtukken.</li>
+    </ol>
+  </section>
+</main>
+<script>
+// ——— DATA – ALLE BESTANDEN ———
+const E = [
+  {id:'E1',  file:'ANN HAAR MAL BERICHTEN.pdf', path:'/mnt/data/ANN HAAR MAL BERICHTEN.pdf', type:'PDF', code:'🔴', topics:['laster','belaging','projectie'], note:'Vijandige WhatsApp‑screenshots; karaktermoord; gaslighting.'},
+  {id:'E2',  file:'Bijlage_H44_Communicatieverklaring_Yolanda.pdf', path:'/mnt/data/Bijlage_H44_Communicatieverklaring_Yolanda.pdf', type:'PDF', code:'🟢', topics:['communicatie','intenties','de‑escalatie'], note:'Respectvolle brief; toont intentie en rust.'},
+  {id:'E3',  file:'Bundel_ABmails_2025-10-14.pdf', path:'/mnt/data/Bundel_ABmails_2025-10-14.pdf', type:'PDF', code:'🟢', topics:['ingebrekestelling','verzoeningszitting','routekaart'], note:'Coverbrief, ingebrekestellingen Ann/Yolanda, verzoek Vredegerecht.'},
+  {id:'E4',  file:'Forensisch-juridisch en psychologisch dossier.pdf', path:'/mnt/data/Forensisch-juridisch en psychologisch dossier.pdf', type:'PDF', code:'🟢', topics:['DSM-5','medisch','juridische mapping'], note:'Hoofdanalyse; koppelt medische onmogelijkheid en gedragspatronen.'},
+  {id:'E5',  file:'anne_chat_reeks.pdf naar mama.pdf', path:'/mnt/data/anne_chat_reeks.pdf naar mama.pdf', type:'PDF', code:'🔵', topics:['triangulatie','hearsay','framing'], note:'Berichten richting moeder; indicatie triangulatie & framing.'},
+  {id:'E6',  file:'Verklaring_Kristof_Paul.pdf', path:'/mnt/data/Verklaring_Kristof_Paul.pdf', type:'PDF', code:'🔵', topics:['triangulatie','werkcontext','privacy'], note:'Paul‑lijn; wederkerig doorsturen; privacy‑narratief in beeld.'},
+  {id:'E7',  file:'HUD_Bewijsbundel_site.html', path:'/mnt/data/HUD_Bewijsbundel_site.html', type:'HTML', code:'🟢', topics:['index','overzicht'], note:'Vorige export; basisstructuur voor integratie.'},
+  {id:'E8',  file:'1Bewijsbundel_H28_H34_H40.pdf', path:'/mnt/data/1Bewijsbundel_H28_H34_H40.pdf', type:'PDF', code:'🟢', topics:['samengevoegde bundel','H.28','H.34','H.40'], note:'Geconsolideerde bundel met kernuittreksels en verklaringen.'},
+  {id:'E9',  file:'Screenshot_2024-12-04-15-09-42-362_com.google.android.apps.messaging[1].jpg', path:'/mnt/data/Screenshot_2024-12-04-15-09-42-362_com.google.android.apps.messaging[1].jpg', type:'IMG', code:'🔵', topics:['geldvraag','druk','facebook‑link'], note:'SMS: link + vraag om bijdrage “advocaat betalen” (3000 EUR).'},
+  {id:'E10', file:'Screenshot_2024-12-05-11-26-55-271_com.miui.home[1].jpg', path:'/mnt/data/Screenshot_2024-12-05-11-26-55-271_com.miui.home[1].jpg', type:'IMG', code:'🔵', topics:['notificatie','facebook','aanhoudend contact'], note:'Meldingspaneel: vriendschapsvoorstel, aanwezigheid Ann in feed.'},
+  {id:'E11', file:'Screenshot_2024-12-09-04-34-12-456_com.miui.gallery.jpg', path:'/mnt/data/Screenshot_2024-12-09-04-34-12-456_com.miui.gallery.jpg', type:'IMG', code:'🟢', topics:['liefdeverklaring','positief','context'], note:'Lang bericht met waardering/liefde; contrasteert met later frame.'},
+  {id:'E12', file:'Screenshot_2024-12-18-01-40-31-147_com.miui.gallery.jpg', path:'/mnt/data/Screenshot_2024-12-18-01-40-31-147_com.miui.gallery.jpg', type:'IMG', code:'🔵', topics:['Messenger','conflict','framing'], note:'Uitspraken: “niets is privé”; rechtvaardiging openbaarheid.'},
+  {id:'E13', file:'Screenshot_2024-10-30-12-01-14-078_com.mobisystems.fileman.jpg', path:'/mnt/data/Screenshot_2024-10-30-12-01-14-078_com.mobisystems.fileman.jpg', type:'IMG', code:'🟢', topics:['brief','gevoelens','loyaliteit'], note:'Papieren brief (p.3): bevestigt aanhoudende gevoelens.'},
+  {id:'E14', file:'Screenshot_2024-12-03-18-23-37-165_com.google.android.apps.photos[1].jpg', path:'/mnt/data/Screenshot_2024-12-03-18-23-37-165_com.google.android.apps.photos[1].jpg', type:'IMG', code:'🟡', topics:['bankmail','hellobank','kaart'], note:'Hello bank‑mail screenshot; context rond kaart/klacht.'},
+  {id:'E15', file:'Screenshot_2024-12-04-09-34-35-749_com.whatsapp-edit[1].jpg', path:'/mnt/data/Screenshot_2024-12-04-09-34-35-749_com.whatsapp-edit[1].jpg', type:'IMG', code:'🔵', topics:['moeder‑chat','triangulatie','framing'], note:'Chat met “Mam”: “mevrouw ga ruzie creëren tussen hun”.'},
+  {id:'E16', file:'Screenshot_2024-03-05-18-02-12-129_com.pushbullet.android.jpg', path:'/mnt/data/Screenshot_2024-03-05-18-02-12-129_com.pushbullet.android.jpg', type:'IMG', code:'🔴', topics:['pushbullet','IT‑sporen','monitoring'], note:'Pushbullet‑melding: technisch spoor van device‑doorsturen/monitoring.'},
+  {id:'E17', file:'bewijs van paul an.pdf', path:'/mnt/data/bewijs van paul an.pdf', type:'PDF', code:'🟢', topics:['Paul‑gesprek','belactie Ann','weerlegging'], note:'Paul bevestigt belactie Ann; ontkent lekken inhoud.'},
+  {id:'E18', file:'Bewijsmateriaal Integratie.pdf', path:'/mnt/data/Bewijsmateriaal Integratie.pdf', type:'PDF', code:'🟢', topics:['overzicht','integratie','mapping'], note:'Overzichtsdocument; integratie & mapping naar HUD.'},
+  {id:'E19', file:'alfred-motion-moments_668a9e5abc6ff08ca6ad0543_1720360504487.mp3.mp3', path:'/mnt/data/alfred-motion-moments_668a9e5abc6ff08ca6ad0543_1720360504487.mp3.mp3', type:'AUDIO', code:'🟡', topics:['audio'], note:'Audiobestand (extern afspelen indien niet ondersteund).'},
+  {id:'E20', file:'alfred-motion-moments_668a9feb51072480f49ee510_1720360905805.mp4', path:'/mnt/data/alfred-motion-moments_668a9feb51072480f49ee510_1720360905805.mp4', type:'VIDEO', code:'🟡', topics:['video'], note:'Video (extern afspelen indien niet ondersteund).'},
+  {id:'E21', file:'alfred-motion-moments_668a9feb51072480f49ee510_1720360905805 - kopie.mp4', path:'/mnt/data/alfred-motion-moments_668a9feb51072480f49ee510_1720360905805 - kopie.mp4', type:'VIDEO', code:'🟡', topics:['video','kopie'], note:'Kopie van video.'},
+  {id:'E22', file:'gesprek met paul terug voor Yolanda en nog de waarheid draaien.m4a', path:'/mnt/data/gesprek met paul terug voor Yolanda en nog de waarheid draaien.m4a', type:'AUDIO', code:'🟢', topics:['audio','Paul‑gesprek'], note:'Audio: Paul‑gesprek; relevant voor triangulatie/weerlegging.'}
+];
+
+// ——— MASTER REGISTER ———
+const tbl = document.getElementById('tbl');
+function renderTable(){
+  const q = document.getElementById('q').value.toLowerCase().trim();
+  const t = document.getElementById('byType').value;
+  const c = document.getElementById('byCode').value;
+  const filtered = E.filter(x=>{
+    const matchQ = !q || [x.file, x.topics.join(' '), x.note].join(' ').toLowerCase().includes(q);
+    const matchT = !t || x.type===t;
+    const matchC = !c || x.code===c;
+    return matchQ && matchT && matchC;
+  });
+  const head = `<thead><tr><th>ID</th><th>Bestand</th><th>Type</th><th>Thema</th><th>Notitie</th><th>Code</th></tr></thead>`;
+  const rows = filtered.map(x=>{
+    const badge = x.code==='🔴'?'b-red':x.code==='🟡'?'b-yellow':x.code==='🟢'?'b-green':'b-blue';
+    return `<tr><td>${x.id}</td><td><a href="${x.path}" class="small">${x.file}</a></td><td>${x.type}</td><td>${x.topics.join(', ')}</td><td>${x.note}</td><td><span class="badge ${badge}">${x.code}</span></td></tr>`;
+  }).join('');
+  tbl.innerHTML = head+`<tbody>`+rows+`</tbody>`;
+}
+renderTable();
+['q','byType','byCode'].forEach(id=>document.getElementById(id).addEventListener('input',renderTable));
+
+// ——— JURIDISCHE BEWIJSTABEL ———
+const facts = [
+  {n:1, feit:'Doorsturen/mededelen van privéberichten aan derden (triangulatie)', src:['E5','E6','E15','E17'], art:['Art. 460 Sw.','Art. 1382 BW'], bewijskracht:'Screenshots + PDF‑verklaring + bevestiging Paul', rel:'Schending briefgeheim / fout tegen zorgvuldigheid; reputatie- en relatie‑schade', code:'🔵'},
+  {n:2, feit:'Laster/karaktermoord in berichtgeving', src:['E1','E12','E18'], art:['Art. 443–444 Sw.'], bewijskracht:'Consistente aantijgingen zonder feitelijke basis; integratie‑overzicht', rel:'Aantasting eer/naam; strafrechtelijk relevant', code:'🔴'},
+  {n:3, feit:'Belaging (druk/aanwezigheid/keten van berichten)', src:['E1','E9','E10','E12','E15'], art:['Art. 442bis Sw.'], bewijskracht:'Herhaald patroon; geldvraag 3000 EUR; voortdurende aansturing', rel:'Psychische druk; beschermingsmaatregelen', code:'🔴'},
+  {n:4, feit:'IT‑monitoring/doorsturen via devices (Pushbullet‑spoor)', src:['E16'], art:['Art. 550bis/ter Sw.'], bewijskracht:'Device‑notificatie‑screenshot', rel:'Ongeoorloofde toegang/afluisteren/doorsturen', code:'🔴'},
+  {n:5, feit:'Opzet tot conflictvergroting (“mevrouw ga ruzie creëren…”)', src:['E15'], art:['Art. 1382 BW'], bewijskracht:'Screenshot met expliciete formulering', rel:'Esacalatie‑opzet; relevant voor schadebegroting', code:'🔵'},
+  {n:6, feit:'Goede trouw en de‑escalatiepoging van Kristof', src:['E2','E3','E4','E11','E13','E17','E18'], art:['Art. 1382 BW'], bewijskracht:'Brief, ingebrekestellingen, liefdeverklaring, getuigen Paul, integratie‑bundel', rel:'Versterkt geloofwaardigheid en redelijkheid', code:'🟢'},
+  {n:7, feit:'Audio‑indicatie triangulatie/weerlegging (Paul‑gesprek)', src:['E22'], art:['—'], bewijskracht:'Audio‑fragment (authenticiteit/keten vereist)', rel:'Ondersteunend; te koppelen aan schriftelijke stukken', code:'🟢'},
+  {n:8, feit:'Bankmail / kaart‑incident (context)', src:['E14'], art:['—'], bewijskracht:'Screenshot bankmail + advies', rel:'Context/achtergrond; beperkt gewicht voor hoofdfeiten', code:'🟡'}
+];
+const factsTbl = document.getElementById('facts');
+factsTbl.innerHTML = `<thead><tr><th>#</th><th>Feit</th><th>Bron(nen)</th><th>Wetsartikel(en)</th><th>Bewijskracht</th><th>Juridische relevantie</th><th>Code</th></tr></thead>`+
+`<tbody>`+
+facts.map(f=>{
+  const badge = f.code==='🔴'?'b-red':f.code==='🟡'?'b-yellow':f.code==='🟢'?'b-green':'b-blue';
+  const links = f.src.map(id=>{const e=E.find(x=>x.id===id);return e?`<a href='${e.path}' class='small'>${e.file}</a>`:''}).join('<br>');
+  return `<tr><td>${f.n}</td><td>${f.feit}</td><td>${links}</td><td>${f.art.join(', ')}</td><td>${f.bewijskracht}</td><td>${f.rel}</td><td><span class='badge ${badge}'>${f.code}</span></td></tr>`;
+}).join('')+
+`</tbody>`;
+
+// ——— GALERIJ ———
+const galIds = ['E9','E10','E11','E12','E13','E15','E16'];
+const gal = document.getElementById('gal');
+gal.innerHTML = galIds.map(id=>{const e=E.find(x=>x.id===id);return e?`<img src='${e.path}' alt='${e.file}'/>`:''}).join('');
+
+// ——— AUDIO/VIDEO ———
+const aud = document.getElementById('audios');
+aud.innerHTML = ['E22','E19'].map(id=>{const e=E.find(x=>x.id===id);return e?`<div class='note'><div class='small'><strong>${e.file}</strong></div><audio controls src='${e.path}'></audio><div class='small'>${e.note}</div></div>`:''}).join('');
+const vid = document.getElementById('videos');
+vid.innerHTML = ['E20','E21'].map(id=>{const e=E.find(x=>x.id===id);return e?`<div class='note'><div class='small'><strong>${e.file}</strong></div><video controls src='${e.path}'></video><div class='small'>${e.note}</div></div>`:''}).join('');
+
+// ——— EXPORT ———
+function download(filename, content, type='text/plain'){
+  const blob = new Blob([content],{type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+}
+
+document.getElementById('btnPrint').addEventListener('click',()=>window.print());
+document.getElementById('btnHTML').addEventListener('click',()=>{
+  const src = '<!DOCTYPE html>'+document.documentElement.outerHTML;
+  download('Bewijsbundel_ALL_V1.html', src, 'text/html');
+});
+document.getElementById('btnJSON').addEventListener('click',()=>{
+  const payload = {meta:{exported:new Date().toISOString(), dossier:'Kristof 2025', version:'ALL_V1'}, evidence:E, facts};
+  download('Bewijsbundel_ALL_V1.json', JSON.stringify(payload,null,2), 'application/json');
+});
+</script>
+</body>
+</html>

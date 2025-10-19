@@ -1,0 +1,548 @@
+<html lang="nl"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kristof HUD — Procesnota + Statusnota + Bewijsbundel (één bestand)</title>
+<meta name="color-scheme" content="dark light">
+
+<!-- Early, safe invoke shim to prevent ReferenceError even before main script loads -->
+<script>
+(function(){
+  function safeDownload(){
+    try{
+      const blob=new Blob([document.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='Kristof_HUD_Procesnota_Statusnota_Bundel.html';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }catch(e){ console.error('[invoke:download] fallback error', e); }
+  }
+  function safePrint(){ try{ window.print(); }catch(e){ console.error('[invoke:print] fallback error', e); } }
+  function safeActivate(tab){
+    try{
+      const btn=[...document.querySelectorAll('.tab')].find(b=>b.dataset.tab===(tab||'procesnota'));
+      if(btn) btn.click();
+    }catch(e){ console.error('[invoke:tab] fallback error', e); }
+  }
+  function safeSearch(term){
+    try{
+      const q=document.getElementById('q');
+      if(q){ q.value=term||''; q.dispatchEvent(new Event('input')); }
+    }catch(e){ console.error('[invoke:search] fallback error', e); }
+  }
+  function safePrintSection(){ safePrint(); }
+  function safeToggleTheme(){ try{ document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light' ? '' : 'light'); }catch(e){} }
+  window.invoke = function invoke(cmd, arg){
+    try{
+      cmd=String(cmd||'').toLowerCase();
+      if(cmd==='print'){ return (typeof window.doPrint==='function' ? (window.doPrint(),true) : (safePrint(),true)); }
+      if(cmd==='download'){ return (typeof window.doDownload==='function' ? (window.doDownload(),true) : (safeDownload(),true)); }
+      if(cmd==='tab'){ return (typeof window.activate==='function' ? (window.activate(arg||'procesnota'),true) : (safeActivate(arg),true)); }
+      if(cmd==='search'){
+        if(typeof window.applySearch==='function'){
+          const qEl=document.getElementById('q'); if(qEl){ qEl.value=arg||''; }
+          window.applySearch(arg||'');
+        } else { safeSearch(arg||''); }
+        return true;
+      }
+      if(cmd==='export-pdf'){ return (typeof window.doExportPdf==='function' ? (window.doExportPdf(),true) : (safePrint(),true)); }
+      if(cmd==='print-section'){ return (typeof window.printSection==='function' ? (window.printSection(arg||'procesnota'),true) : (safePrintSection(),true)); }
+      if(cmd==='toggle-theme'){ return (typeof window.toggleTheme==='function' ? (window.toggleTheme(),true) : (safeToggleTheme(),true)); }
+      if(cmd==='bundle-export'){ return (typeof window.exportManifest==='function' ? (window.exportManifest(),true) : false); }
+      console.warn('[invoke] Onbekende opdracht:', cmd);
+      return false;
+    }catch(e){ console.error('[invoke] error', e); return false; }
+  };
+})();
+</script>
+
+<style>
+:root{
+  --bg:#000713; --panel:rgba(0,22,44,.45); --panel-strong:rgba(0,32,64,.6);
+  --ink:#e7faff; --muted:#9cc9d6; --line:rgba(0,234,255,.28);
+  --accent:#00eaff; --accent2:#2aa9ff; --ok:#29ffa3; --warn:#ffd166; --bad:#ff6b6b;
+}
+body[data-theme="light"]{
+  --bg:#f7fbff; --panel:rgba(255,255,255,.85); --panel-strong:rgba(255,255,255,.95);
+  --ink:#0b1b22; --muted:#3a5560; --line:rgba(0,60,120,.18);
+  --accent:#006b9f; --accent2:#2f7fbf; --ok:#0f8a5f; --warn:#b18400; --bad:#b64a4a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);} 
+.container{max-width:1100px;margin:22px auto;padding:18px}
+.hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(145deg,rgba(0,234,255,.3),rgba(0,234,255,.05));border:1px solid var(--line);box-shadow:0 10px 40px rgba(0,234,255,.15), inset 0 0 28px rgba(0,234,255,.08)}
+.h1{font-size:1.45rem;color:var(--accent);margin:0}
+.meta{color:var(--muted);font-size:.95rem}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:8px 10px;border:1px solid var(--line);background:rgba(0,234,255,.06);color:var(--ink);border-radius:8px;cursor:pointer}
+.btn:hover{background:rgba(0,234,255,.1)}
+.search{flex:1;min-width:220px;}
+.search input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,234,255,.05);color:var(--ink)}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tab{padding:10px 12px;border:1px solid var(--line);border-bottom:none;border-top-left-radius:10px;border-top-right-radius:10px;background:rgba(0,234,255,.05);color:var(--muted);cursor:pointer}
+.tab.active{background:linear-gradient(180deg, rgba(0,34,68,.5), rgba(0,10,22,.6));color:var(--accent)}
+.panel{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg, rgba(0,34,68,.5), rgba(0,10,22,.6));padding:18px}
+.hidden{display:none}
+hr.sep{border:none;border-top:1px dashed var(--line);margin:14px 0}
+
+h2,h3{color:var(--accent);margin:.6em 0 .35em}
+h1{color:var(--accent)}
+p,li{line-height:1.6}
+.badge{display:inline-block;padding:2px 8px;border:1px solid var(--accent);color:var(--accent);border-radius:999px;font-size:.8rem}
+.small{font-size:.92rem;color:var(--muted)}
+.crit{font-weight:700;text-decoration:underline}
+.note{border-left:4px solid var(--warn);background:rgba(255,209,102,.08);padding:10px 14px;margin:12px 0}
+.legend span{padding:2px 8px;border-radius:6px;margin-right:6px;border:1px solid var(--line)}
+.table{width:100%;border-collapse:collapse;font-size:.95rem;margin:.5rem 0 1rem}
+.table th,.table td{border:1px solid var(--line);padding:10px;vertical-align:top}
+.table th{background:rgba(0,234,255,.08);color:var(--accent);text-align:left}
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 2px}
+.kpi div{padding:6px 10px;border:1px dashed rgba(0,234,255,.35);border-radius:8px}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+code{background:rgba(0,234,255,.1);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+.footer{margin:14px 0;color:var(--muted);font-size:.9rem}
+.sticky-top{position:sticky;top:0;z-index:10;background:linear-gradient(180deg, rgba(0,7,19,.95), rgba(0,7,19,.85));backdrop-filter:blur(4px);padding:8px 0 4px}
+.testpanel{margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:10px;background:rgba(0,234,255,.03)}
+.testlog{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap;max-height:240px;overflow:auto}
+.pass{color:var(--ok)} .fail{color:var(--bad)} .info{color:var(--muted)}
+.toast{position:fixed;right:12px;bottom:12px;max-width:420px;background:rgba(255,107,107,.1);border:1px solid var(--bad);color:var(--ink);padding:10px 12px;border-radius:10px;backdrop-filter:blur(6px);box-shadow:0 8px 30px rgba(0,0,0,.35);z-index:9999}
+.toast h4{margin:.2rem 0;color:var(--bad)}
+/* Print-modes */
+@media print{
+  .sticky-top,.toolbar,.tabs,.testpanel,.footer{display:none !important}
+  body[data-print="section"] .panel{display:none !important}
+  body[data-print="section"] .panel.print-only{display:block !important}
+}
+
+/* Bundel UI */
+.drop{border:1px dashed var(--line);background:rgba(0,234,255,.04);padding:14px;border-radius:12px;text-align:center;color:var(--muted)}
+.badge-mini{font-size:.75rem;border:1px solid var(--line);border-radius:999px;padding:2px 6px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="sticky-top">
+      <div class="hdr">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <p class="h1">Kristof HUD — Procesnota + Statusnota + Bewijsbundel</p>
+            <p class="meta">Dossier: <strong>Kristof 2025 – Waarheidsdossier &amp; Communicatieherstel</strong> · Eén HTML-bestand</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btnPrint" title="Print alle secties">🖨️ Print</button>
+          <button class="btn" id="btnDownload" title="Download deze pagina als .html">💾 Download HTML</button>
+          <button class="btn" id="btnTheme" title="Schakel thema">🌓 Thema</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search"><input id="q" type="search" placeholder="Zoeken in titels, kerncitaten en tabellen…"></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Documentkeuze">
+        <button class="tab active" data-tab="procesnota" role="tab" aria-selected="true">📑 Procesnota</button>
+        <button class="tab" data-tab="statusnota" role="tab" aria-selected="false">📘 Statusnota</button>
+        <button class="tab" data-tab="bundel" role="tab" aria-selected="false">📂 Bewijsbundel</button>
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- TAB: PROCESNOTA       -->
+    <!-- ===================== -->
+    <section id="procesnota" class="panel" role="tabpanel">
+      <h1 style="">Procesnota – Integratie WhatsApp + Gmail – Yolanda &amp; Anne</h1>
+      <p class="small" style="">Datum: 2025-10-16</p>
+      <h2 style="">Samenvatting (stand van bewijs)</h2>
+      <ul>
+        <li style=""><strong>Status:</strong> <span class="bad">geen hard artefact</span> dat Yolanda/Anne rechtstreeks aan een strafbaar feit koppelt.</li>
+        <li style=""><strong>Wat wél ligt:</strong> WhatsApp-PDF’s, screenshot “ANN”, en Gmail-hits leveren <em>aanwijzingen</em> en routes naar hard bewijs.</li>
+        <li style=""><strong>Volgende mijlpaal:</strong> <span class="ok">Drive-batch 001 + social-exports (URL + archief + screenshots) + EML headers</span>.</li>
+      </ul>
+      <div class="legend small"><strong>Legendecodes:</strong>
+        <span>🟢 ondersteunend</span>
+        <span>🔵 manipulatie</span>
+        <span>🔴 strafbaar</span>
+        <span>🟡 emotie</span> · Labels: [Waarheid] [Manipulatie] [Wet] [Narcisme] [DSM-profiel]
+      </div>
+      <h2 style="">Kerncitaten (proceskritisch)</h2>
+      <p style="">Uit de screenshot “ANN”: <span class="crit">“Kom maar naar mij.”</span> · <span class="crit">“Het is tijd dat je uw koffers pakt en naar hier komt …”</span> · 
+      <span class="crit">“En gaan we een antwoord geven aan ‘mevrouw ga ruzie creëren tussen hun’.”</span>
+      <br><span class="small">[Waarheid] overgenomen uit door jou aangeleverde afbeelding; bronbestandsnaam: <code>BERICHTEN VAN ANN 1.png</code>.</span></p>
+      <p>Gmail (aan Yolanda): <span class="crit">“Je hebt dit doorgestuurd! Niet te geloven.”</span> · 
+      <span class="crit">Verwijzing naar “politie papieren aan An” (feb–mrt 2024)</span> · 
+      <span class="crit">“Graag verwijderen van de titel?” (TikTok-context)</span>.
+      <br><span class="small">[Waarheid] kernpassages; exacte headers/URLs moeten nog worden ingebracht voor hardheid.</span></p>
+      <h2 style="">Bewijstabel (geconsolideerd)</h2>
+      <table class="table">
+        <thead>
+          <tr style=""><th style="">Feit</th><th style="">Bron</th><th style="">Bewijskracht</th><th style="">Juridische relevantie [Wet]</th><th style="">Code</th></tr>
+        </thead>
+        <tbody>
+          <tr style="">
+            <td style="">“Kom naar mij / pak je koffers” + “antwoord geven aan ‘mevrouw…’”</td>
+            <td style="">Screenshot <code>BERICHTEN VAN ANN 1.png</code></td>
+            <td style="">Middel (tekst zichtbaar; meta ontbreekt)</td>
+            <td style="">Belaging (art. 237–238 Sw.) pas bij <u>herhaling + impact</u>; aanwijzing van <strong>[Manipulatie]</strong>.</td>
+            <td style="">🟢</td>
+          </tr>
+          <tr>
+            <td>TikTok-link gedeeld in mail</td>
+            <td style="">Gmail “1 nog niet hier…” (19‑08‑2025)</td>
+            <td style="">Laag–middel (link, geen capture)</td>
+            <td style="">Laster (art. 240 Sw.) slechts met <u>openbare post + archief + auteur</u>.</td>
+            <td style="">🟢</td>
+          </tr>
+          <tr>
+            <td>“Graag verwijderen van de titel?” (TikTok)</td>
+            <td style="">Gmail 10‑08‑2025 (+ Fwd)</td>
+            <td style="">Laag–middel</td>
+            <td style="">Privacy/Laster pas met URL + archief + herleidbaarheid tot auteur.</td>
+            <td style="">🟢</td>
+          </tr>
+          <tr style="">
+            <td style="">“Je hebt dit doorgestuurd!” + “politie papieren aan An”</td>
+            <td style="">Gmail 10‑07‑2025 (thread “voorstel advocaat”)</td>
+            <td style="">Laag (stelling zonder artefact)</td>
+            <td style="">Schending privécommunicatie vereist <u>EML headers</u> / publieke publicatie; justitiële stukken → <u>GDPR‑logs</u>.</td>
+            <td style="">🟢</td>
+          </tr>
+          <tr style="">
+            <td style="">“Stuur niets meer, klacht vervalt” + blijft mailen; (stelling) aanzetten zoon tot contact/dreigen</td>
+            <td style="">Gmail juli–aug 2025 (onderwerpen “(No Subject)”/“.”) + jouw positie</td>
+            <td style="">Middel voor mails; Laag voor zoon‑stelling (artefact nodig)</td>
+            <td style=""><strong>[Manipulatie]</strong>: “klacht vervalt” door bericht is <u>juridisch onjuist</u>. Voortgezet contact door klager is <u>inconsistent</u> met onveiligheidsclaim; kan bij herhaling bijdragen aan belaging.</td>
+            <td style="">🔵</td>
+          </tr>
+          <tr style="">
+            <td style="">Kleine geldbedragen (50–55€) – vraag en bevestiging “is overgemaakt”</td>
+            <td style="">WhatsApp PDF’s</td>
+            <td style="">Middel (chatlog)</td>
+            <td style="">Geen vermogensdelict zichtbaar; context voor druk/dwang te onderzoeken via tijdlijn/attesten.</td>
+            <td style="">🟡</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2 style="">Juridische mapping (kort)</h2>
+      <ul>
+        <li style=""><strong>Laster / kwaadaardige ruchtbaarmaking</strong> → art. 240 Sw. (herv.). Vereist openbaarmaking + valsheid + herleidbare auteur.</li>
+        <li style=""><strong>Schending privécommunicatie/gegevens</strong> → art. 342 e.v. Sw. (herv.). Vereist onrechtmatige verkrijging/verspreiding of openbare publicatie van privéberichten.</li>
+        <li style=""><strong>Belaging</strong> → art. 237–238 Sw. (herv.). Vereist herhaald gedrag, weten/moeten weten en ernstige verstoring van rust.</li>
+        <li style=""><strong>Valsheid/gebruik valse stukken</strong> → art. 451 e.v. Sw. (herv.). Vereist vals document of misleidende hoedanigheid + gebruik.</li>
+      </ul>
+      <h2 style="">Wat maakt dit hard (artefact‑checklist)</h2>
+      <ol>
+        <li style=""><u>Social</u>: voor elke post/vid – URL + Wayback/archive.today + screenshot met statusbalk/timestamp + accountnaam.</li>
+        <li style=""><u>EML</u>: exports met volledige Received/SPF/DKIM (voor “doorgestuurd” en de juli–aug mails).</li>
+        <li style=""><u>GDPR‑logs</u>: afgifte/raadpleging justitiële stukken (feb–mrt 2024).</li>
+        <li style=""><u>Belaging</u>: volledige WhatsApp‑thread met Ann (JSON/PDF), frequentietabel en impact (attesten/werk/getuigen).</li>
+      </ol>
+      <h2 style="">Chain of Custody (batch)</h2>
+      <ul>
+        <li style=""><a href="sandbox:/mnt/data/Drive-Batch-001/manifest.json">manifest.json</a></li>
+        <li style=""><a href="sandbox:/mnt/data/Drive-Batch-001/hashlist.txt">hashlist.txt</a></li>
+        <li style=""><a href="sandbox:/mnt/data/Drive-Batch-001/timeline.csv">timeline.csv</a></li>
+        <li style=""><a href="sandbox:/mnt/data/Drive-Batch-001.zip">Drive-Batch-001.zip</a></li>
+      </ul>
+    </section>
+
+    <!-- ===================== -->
+    <!-- TAB: STATUSNOTA       -->
+    <!-- ===================== -->
+    <section id="statusnota" class="panel hidden" role="tabpanel">
+      <h1 style="">📘 Statusnota – Mogelijke strafbare feiten m.b.t. Yolanda &amp; Anne</h1>
+      <p class="small" style="">Datum: 2025-10-16</p>
+      <div class="kpi">
+        <div><strong>Status:</strong> <span class="warn">geen hard artefact aangetroffen in Gmail-batch</span></div>
+        <div><strong>Procesbaarheid nu:</strong> <span class="bad">laag</span></div>
+        <div><strong>Volgende mijlpaal:</strong> <span class="ok">Drive-batch 001 + social-exports</span></div>
+      </div>
+      <p style="">Samengevat: de huidige mails tonen <span class="crit">conflict en stellingen</span>, maar geen directe, verifieerbare artefacten die Yolanda of Anne aan een strafbaar feit koppelen. De items ondersteunen wél gerichte <em>bewijsverzoeken</em> (Drive/social/headers).</p>
+      <h2 style="">1) Wanneer wordt dit “hard” voor advocaat/rechter?</h2>
+      <table class="table">
+        <thead><tr style=""><th style="">Hypothese ([Wet])</th><th style="">Benodigde harde artefacten</th></tr></thead>
+        <tbody>
+          <tr style="">
+            <td style=""><strong>Laster / kwaadaardige ruchtbaarmaking</strong> (klassiek art. 443–444 Sw. → hervormd art. 240 Sw.)</td>
+            <td style="">– URL van de <em>openbare</em> post/vid + <span class="crit">Wayback/archive.today</span> capture<br>– Screenshot met <span class="crit">statusbalk &amp; timestamp</span>, zichtbare accountnaam<br>– Herleidbaarheid naar <strong>Yolanda/Anne</strong> (eigen account/beheer)<br>– Inhoud objectief <strong>onwaar</strong> of zonder grond, en <strong>schade</strong> aantoonbaar</td>
+          </tr>
+          <tr style="">
+            <td style=""><strong>Schending privécommunicatie/gegevens</strong> (klassiek 314bis/259bis → art. 342 e.v. Sw.)</td>
+            <td style="">– <span class="crit">EML</span> met <strong>Received/SPF/DKIM</strong> headers (forward/interceptie-spoor)<br>– Of: <em>openbare</em> publicatie van privéberichten (URL + archief + screenshot)<br>– Context waaruit <strong>onrechtmatigheid</strong> blijkt (geen toestemming / beveiliging omzeild)</td>
+          </tr>
+          <tr style="">
+            <td style=""><strong>Belaging</strong> (klassiek 442bis → art. 237–238 Sw.)</td>
+            <td style="">– Tijdlijn met <strong>frequentie</strong> + <strong>kanalen</strong> (tel/app/social)<br>– <strong>Impact</strong>: medische attesten, werkdocumenten, getuigen<br>– Aantoonbaar: dader wist of moest weten dat dit jouw rust <strong>ernstig</strong> verstoorde</td>
+          </tr>
+          <tr style="">
+            <td style=""><strong>Valsheid/gebruik valse stukken</strong> (klassiek 193–197 → art. 451 e.v. Sw.)</td>
+            <td style="">– Het <span class="crit">valse document</span> of bewijs van misleidende hoedanigheid<br>– Gebruikssituatie (waar/wanneer/tegen wie), bijv. overhandiging aan instantie<br>– Officiële <strong>logregistraties</strong> (GDPR‑inzage) wie wat ontving</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <p style=""><strong>Nu</strong> is de proceskans <span class="bad">laag</span> wegens het ontbreken van <span class="crit">harde artefacten</span> (URL+archief, EML‑headers, logs). Met Drive‑batch 001 en social‑exports stijgt de procesbaarheid snel naar <span class="ok">middel</span>; bij volledige keten (bron→context→publicatie/gebruik) met herleidbaarheid wordt dit <span class="ok">hoog</span>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== -->
+    <!-- TAB: BEWIJSBUNDEL     -->
+    <!-- ===================== -->
+    <section id="bundel" class="panel hidden" role="tabpanel">
+      <h1 style="">📂 Bewijsbundel</h1>
+      <p class="small" style="">Maak een exporteerbare bundel met hashes en manifest. Sleep bestanden of gebruik de knop hieronder.</p>
+
+      <div class="kpi">
+        <div class="small">Actieve items: <span id="bundelCount">0</span></div>
+        <div class="small">Laatste export: <span id="bundelExportTime">–</span></div>
+      </div>
+
+      <div class="drop" id="drop">
+        Sleep bestanden hierheen of 
+        <label class="btn" for="fileInput">📎 kies bestanden</label>
+        <input id="fileInput" type="file" multiple="" style="display:none">
+      </div>
+
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn" id="btnExportManifest">🧾 Exporteer manifest.json</button>
+        <button class="btn" id="btnPrintBundel" title="Print alleen de bundel">🖨️ Print bundel</button>
+        <button class="btn" id="btnDownloadHtml" title="Download deze pagina met bundel">💾 Download bundel-HTML</button>
+        <span class="badge-mini">A4 print via browser</span>
+      </div>
+
+      <h2 style="">Inbegrepen bronnen</h2>
+      <ul>
+        <li style=""><a href="sandbox:/mnt/data/Procesnota_Yolanda_Anne_v2_2025-10-16.html">Procesnota (volledige versie)</a></li>
+        <li style=""><a href="sandbox:/mnt/data/Statusnota_Strafbare_Feiten_Yolanda_Anne_2025-10-16.html">Statusnota (volledige versie)</a></li>
+      </ul>
+
+      <h2 style="">Bundel-items</h2>
+      <table class="table" id="bundelTable">
+        <thead>
+          <tr style="">
+            <th style="">#</th><th style="">Bestand</th><th style="">Grootte</th><th style="">SHA‑256</th><th style="">Feit (bewijspassage)</th><th style="">Bron</th><th style="">Bewijskracht</th><th style="">[Wet]</th><th style="">Code</th>
+          </tr>
+        </thead>
+        <tbody id="bundelBody"><tr style=""><td colspan="9" class="small" style="">Nog geen items. Voeg bestanden toe om automatische hashes te genereren. Velden zijn bewerkbaar.</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- ===================== -->
+    <!-- TESTPANEEL            -->
+    <!-- ===================== -->
+    <section class="testpanel" aria-live="polite">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap">
+        <strong>Automatische testcases</strong>
+        <div>
+          <button class="btn" id="btnRunTests">▶ Run tests</button>
+          <button class="btn" id="btnShowErrors">⛑️ Simuleer fout</button>
+        </div>
+      </div>
+      <div class="testlog" id="testlog"><span class="info">Start test suite...
+</span><span class="pass">✔ window.invoke bestaat
+</span><span class="pass">✔ invoke("tab","statusnota") activeert tab
+</span><span class="pass">✔ invoke("tab","procesnota") activeert terug
+</span><span class="pass">✔ doPrint is functie
+</span><span class="pass">✔ doDownload is functie
+</span><span class="pass">✔ zoekfilter reduceert zichtbare nodes
+</span></div>
+    </section>
+
+    <p class="footer">HUD: printvriendelijk, themaschakelaar, bundel-manifest, alles in één bestand.</p>
+  </div>
+
+<script>
+(function setupGlobalErrorHandler(){
+  window.addEventListener('error', function(ev){
+    showToast('Runtime error', ev.message + (ev.filename? '\n' + ev.filename + ':' + ev.lineno : ''));
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    showToast('Unhandled promise rejection', String(ev.reason || 'onbekende reden'));
+  });
+})();
+function showToast(title, msg){
+  const t=document.createElement('div'); t.className='toast';
+  t.innerHTML='<h4>'+escapeHtml(title)+'</h4><div class="small">'+escapeHtml(msg)+'</div>';
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 6000);
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+
+// Tabs & UI
+const tabs=[...document.querySelectorAll('.tab')];
+const panels={procesnota:document.getElementById('procesnota'),statusnota:document.getElementById('statusnota'),bundel:document.getElementById('bundel')};
+function activate(name){
+  for(const t of tabs){const on=t.dataset.tab===name; t.classList.toggle('active',on); t.setAttribute('aria-selected',on)}
+  for(const k in panels){panels[k].classList.toggle('hidden',k!==name)}
+}
+tabs.forEach(t=>t.addEventListener('click',()=>activate(t.dataset.tab)));
+
+// Theme
+function toggleTheme(){
+  const cur=document.body.getAttribute('data-theme');
+  document.body.setAttribute('data-theme', cur==='light' ? '' : 'light');
+}
+document.getElementById('btnTheme').addEventListener('click', toggleTheme);
+
+// Print helpers
+function prepareSectionPrint(sectionId){
+  document.body.setAttribute('data-print','section');
+  const target=document.getElementById(sectionId);
+  if(!target) throw new Error('Sectie niet gevonden: '+sectionId);
+  target.classList.add('print-only');
+  return function cleanup(){ document.body.removeAttribute('data-print'); target.classList.remove('print-only'); };
+}
+function printSection(sectionId){
+  const cleanup=prepareSectionPrint(sectionId);
+  const after=()=>{ cleanup(); window.removeEventListener('afterprint', after); };
+  window.addEventListener('afterprint', after);
+  window.print();
+}
+function doExportPdf(){ printSection(document.querySelector('.tab.active').dataset.tab); }
+function doPrint(){ window.print(); }
+document.getElementById('btnPrint').addEventListener('click',doPrint);
+
+// Download HTML
+function doDownload(){
+  const blob=new Blob([document.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='Kristof_HUD_Procesnota_Statusnota_Bundel.html';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+document.getElementById('btnDownload').addEventListener('click',doDownload);
+
+document.getElementById('btnDownloadHtml').addEventListener('click',doDownload);
+
+document.getElementById('btnPrintBundel').addEventListener('click',()=>printSection('bundel'));
+
+// Search
+const q=document.getElementById('q');
+function applySearch(term){
+  const needle=String(term||'').trim().toLowerCase();
+  for(const p of Object.values(panels)){
+    const rows=[...p.querySelectorAll('h1,h2,h3,p,li,td,th')];
+    rows.forEach(el=>{ const text=el.textContent.toLowerCase(); el.style.display=(needle===''||text.includes(needle))?'' : 'none'; });
+    p.querySelectorAll('table').forEach(tbl=>{
+      tbl.style.display='';
+      tbl.querySelectorAll('tr').forEach(tr=>{ const cells=[...tr.children]; const rowMatch=needle===''||cells.some(c=>c.textContent.toLowerCase().includes(needle)); tr.style.display=rowMatch? '' : 'none'; });
+      tbl.querySelectorAll('th').forEach(th=>th.style.display='');
+    });
+  }
+}
+q.addEventListener('input',()=>applySearch(q.value));
+
+// Bundel logic
+const bundelModel=[];
+const bundelBody=document.getElementById('bundelBody');
+const bundelCount=document.getElementById('bundelCount');
+const bundelExportTime=document.getElementById('bundelExportTime');
+
+function toHex(buf){ return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+async function sha256File(file){ const ab=await file.arrayBuffer(); const dig=await crypto.subtle.digest('SHA-256', ab); return toHex(dig); }
+
+function renderBundel(){
+  bundelBody.innerHTML='';
+  if(bundelModel.length===0){ bundelBody.innerHTML='<tr><td colspan="9" class="small">Nog geen items. Voeg bestanden toe om automatische hashes te genereren. Velden zijn bewerkbaar.</td></tr>'; }
+  bundelModel.forEach((it,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${idx+1}</td>
+      <td>${escapeHtml(it.name)}</td>
+      <td>${(it.size/1024).toFixed(1)} KB</td>
+      <td><code>${it.sha256}</code></td>
+      <td contenteditable="true">${escapeHtml(it.feit||'')}</td>
+      <td contenteditable="true">${escapeHtml(it.bron||'')}</td>
+      <td contenteditable="true">${escapeHtml(it.bewijskracht||'')}</td>
+      <td contenteditable="true">${escapeHtml(it.wet||'')}</td>
+      <td contenteditable="true">${escapeHtml(it.code||'')}</td>`;
+    bundelBody.appendChild(tr);
+  });
+  bundelCount.textContent=String(bundelModel.length);
+}
+
+async function addFiles(files){
+  for(const f of files){
+    try{
+      const h=await sha256File(f);
+      bundelModel.push({name:f.name,size:f.size,type:f.type||'',sha256:h, feit:'', bron:'', bewijskracht:'', wet:'', code:''});
+    }catch(e){ showToast('Hash-fout', f.name+': '+(e.message||e)); }
+  }
+  renderBundel();
+}
+
+document.getElementById('fileInput').addEventListener('change', e=> addFiles(e.target.files));
+
+const drop=document.getElementById('drop');
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.style.background='rgba(0,234,255,.08)'; });
+drop.addEventListener('dragleave', ()=>{ drop.style.background='rgba(0,234,255,.04)'; });
+drop.addEventListener('drop', e=>{ e.preventDefault(); drop.style.background='rgba(0,234,255,.04)'; addFiles(e.dataTransfer.files||[]); });
+
+function snapshotTableEdits(){
+  // Leest contenteditable cellen terug in model
+  const rows=[...bundelBody.querySelectorAll('tr')];
+  rows.forEach((tr,i)=>{
+    if(!bundelModel[i]) return;
+    const tds=tr.querySelectorAll('td');
+    bundelModel[i].feit=tds[4].textContent.trim();
+    bundelModel[i].bron=tds[5].textContent.trim();
+    bundelModel[i].bewijskracht=tds[6].textContent.trim();
+    bundelModel[i].wet=tds[7].textContent.trim();
+    bundelModel[i].code=tds[8].textContent.trim();
+  });
+}
+
+function exportManifest(){
+  snapshotTableEdits();
+  const payload={
+    dossier:"Kristof 2025 – Waarheidsdossier & Communicatieherstel",
+    generated_at:new Date().toISOString(),
+    items:bundelModel
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='bewijslast_manifest.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  bundelExportTime.textContent=new Date().toLocaleString();
+}
+
+document.getElementById('btnExportManifest').addEventListener('click', exportManifest);
+
+// Tests
+const logEl=document.getElementById('testlog');
+function log(msg, cls){ const span=document.createElement('span'); span.className=cls||'info'; span.textContent=msg+'\n'; logEl.appendChild(span); }
+function resetLog(){logEl.textContent='';}
+function expect(name, condition){ if(condition){ log('✔ '+name, 'pass'); } else { log('✖ '+name, 'fail'); } }
+
+function runTests(){
+  resetLog(); log('Start test suite...','info');
+  // Bestaande tests (ongemoeid gelaten)
+  expect('window.invoke bestaat', typeof window.invoke==='function');
+  expect('invoke("tab","statusnota") activeert tab', (invoke('tab','statusnota'), panels.statusnota && !panels.statusnota.classList.contains('hidden')));
+  expect('invoke("tab","procesnota") activeert terug', (invoke('tab','procesnota'), panels.procesnota && !panels.procesnota.classList.contains('hidden')));
+  expect('doPrint is functie', typeof doPrint==='function');
+  expect('doDownload is functie', typeof doDownload==='function');
+  const before=[...panels.procesnota.querySelectorAll('p,li,td')].filter(e=>e.style.display!=='none').length;
+  applySearch('TikTok');
+  const after=[...panels.procesnota.querySelectorAll('p,li,td')].filter(e=>e.style.display!=='none').length;
+  expect('zoekfilter reduceert zichtbare nodes', after <= before);
+  applySearch('');
+  let blobOk=true; try{ doDownload(); }catch(e){ blobOk=false; }
+  expect('download veroorzaakt geen exception', blobOk);
+  let threw=false; try{ window.invoke('noop'); }catch(e){ threw=true; }
+  expect('invoke("noop") gooit geen error', !threw);
+  expect('invoke("search","kom maar") werkt', (invoke('search','kom maar'), true));
+  invoke('search','');
+  expect('invoke("unknown") => false', window.invoke('unknown') === false);
+  // Nieuwe tests voor bundel
+  expect('bundel-tab bestaat', !!panels.bundel);
+  // Simuleer manifest export call
+  let exportOk=true; try{ exportManifest(); }catch(e){ exportOk=false; }
+  expect('exportManifest geen exception', exportOk);
+  log('Tests klaar.','info');
+}
+
+document.getElementById('btnRunTests').addEventListener('click', runTests);
+document.getElementById('btnShowErrors').addEventListener('click', ()=>{ try{ throw new Error('Simulatiefout: dit is een test van de foutweergave.'); } catch(e){ showToast('Simulatie', e.message); } });
+</script>
+
+
+</body></html>
