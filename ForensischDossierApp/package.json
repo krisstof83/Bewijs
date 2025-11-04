@@ -1,0 +1,23 @@
+{
+  "name": "ForensischDossierApp",
+  "version": "1.0.0",
+  "description": "Automatische PDF-scanner en dossierbouwer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^32.0.0",
+    "express": "^4.19.2",
+    "glob": "^10.3.10",
+    "googleapis": "^133.0.0",
+    "image-type": "^6.0.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "sqlite3": "^5.1.7",
+    "tesseract.js": "^5.1.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
