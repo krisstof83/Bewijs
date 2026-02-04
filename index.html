@@ -1,1 +1,306 @@
-<a class="btn" href="admin_bewijs_manager.html" target="_blank">Admin: Bewijs Manager</a>
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OSINT • Forensisch Zoekplatform</title>
+<style>
+:root{
+ --bg:#05070c;
+ --panel:#0b1020;
+ --glass:rgba(255,255,255,.04);
+ --neon:#22d3ee;
+ --pink:#ec4899;
+ --green:#22c55e;
+ --text:#e5e7eb;
+ --muted:#94a3b8;
+ --warn:#f59e0b;
+ --error:#ef4444;
+}
+*{box-sizing:border-box;font-family:system-ui,Segoe UI,Arial,sans-serif}
+body{
+ margin:0;background:
+ radial-gradient(1200px 600px at 10% -10%,#0ff2,transparent),
+ radial-gradient(1200px 600px at 90% 10%,#f0f2,transparent),
+ var(--bg);
+ color:var(--text);
+ height:100vh;
+}
+header{
+ padding:16px 24px;
+ display:flex;align-items:center;gap:16px;
+ background:linear-gradient(90deg,#020617,#020617aa);
+ border-bottom:1px solid #1f2937;
+}
+header h1{
+ margin:0;font-size:18px;
+ background:linear-gradient(90deg,var(--neon),var(--pink));
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+main{
+ display:grid;
+ grid-template-columns:340px 1fr;
+ height:calc(100vh - 58px);
+}
+aside{
+ padding:16px;
+ background:var(--panel);
+ border-right:1px solid #1f2937;
+ display:flex;flex-direction:column;gap:12px;
+ overflow:auto;
+}
+input,button,select{
+ width:100%;padding:12px;
+ background:#020617;
+ border:1px solid #1f2937;
+ color:var(--text);
+ border-radius:10px;
+}
+input:focus,select:focus{outline:none;border-color:var(--neon)}
+button{
+ cursor:pointer;
+ background:linear-gradient(90deg,var(--neon),var(--pink));
+ border:none;color:#020617;
+ font-weight:700;
+ box-shadow:0 0 20px #22d3ee55;
+ transition:.2s;
+}
+button:hover{transform:scale(1.02);box-shadow:0 0 30px #ec489988}
+.status{font-size:12px;color:var(--muted)}
+section{
+ padding:16px;
+ overflow:auto;
+ position:relative;
+ display:grid;
+ grid-template-rows:auto 1fr;
+ gap:16px;
+}
+.panel{
+ background:linear-gradient(180deg,var(--glass),transparent);
+ border:1px solid #1f2937;
+ border-radius:16px;
+ padding:14px;
+ backdrop-filter:blur(10px);
+ box-shadow:0 0 30px #000;
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+ gap:16px;
+}
+.card h3{
+ margin:0 0 6px 0;
+ color:var(--neon);
+}
+.card small{color:var(--muted)}
+.card a{color:var(--pink);text-decoration:none}
+.tag{
+ display:inline-block;
+ font-size:11px;
+ padding:2px 8px;
+ border-radius:999px;
+ margin-right:6px;
+ background:#111827;
+ border:1px solid #1f2937;
+ color:var(--muted);
+}
+.log{
+ display:flex;flex-direction:column;gap:8px;
+ max-height:260px;overflow:auto;
+ font-size:12px;color:var(--muted);
+}
+.log-item{
+ padding:8px;border:1px solid #1f2937;border-radius:10px;background:#0b1224;
+}
+.log-item strong{color:var(--text)}
+.log-item.error{border-color:#3f1f1f;color:var(--error)}
+.log-item.warn{border-color:#3f2f1f;color:var(--warn)}
+.scanline{
+ position:absolute;inset:0;
+ background:repeating-linear-gradient(
+ 180deg,
+ transparent 0px,
+ transparent 2px,
+ rgba(255,255,255,.03) 3px
+ );
+ pointer-events:none;
+ animation:scan 6s linear infinite;
+}
+@keyframes scan{from{background-position:0 0}to{background-position:0 100%}}
+.footer{
+ position:absolute;bottom:8px;right:16px;
+ font-size:11px;color:var(--muted);
+}
+@media (max-width: 900px){
+ main{grid-template-columns:1fr;}
+ section{height:auto;}
+}
+</style>
+</head>
+<body>
+<header>
+ <h1>🧠 OSINT • Forensisch Zoekplatform</h1>
+</header>
+
+<main>
+<aside>
+ <input id="q" placeholder="Naam • Email • Domein • Gebruikersnaam">
+ <select id="depth">
+  <option value="fast">Snel scannen</option>
+  <option value="deep">Diep scannen</option>
+ </select>
+ <button id="run">🚀 ZOEK ALLES</button>
+ <div class="status" id="status">Status: standby</div>
+ <div class="panel">
+  <div class="status"><strong>Log / Status</strong></div>
+  <div class="log" id="log"></div>
+ </div>
+</aside>
+
+<section>
+ <div class="panel">
+  <div class="status"><strong>Resultaten</strong></div>
+  <div class="grid" id="out"></div>
+ </div>
+ <div class="scanline"></div>
+ <div class="footer">forensic-mode • live OSINT</div>
+</section>
+</main>
+
+<script>
+const sources = [
+ {
+  name: 'DuckDuckGo',
+  score: 70,
+  buildUrl: q => `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_redirect=1&no_html=1`,
+  parse: data => {
+   const items = [];
+   if (data.AbstractText) {
+    items.push({
+     title: data.Heading || 'DuckDuckGo Samenvatting',
+     text: data.AbstractText,
+     url: data.AbstractURL || 'https://duckduckgo.com',
+     source: 'DuckDuckGo'
+    });
+   }
+   if (Array.isArray(data.RelatedTopics)) {
+    data.RelatedTopics.slice(0, 5).forEach(topic => {
+     if (topic.Text && topic.FirstURL) {
+      items.push({
+       title: topic.Text.split('-')[0].trim(),
+       text: topic.Text,
+       url: topic.FirstURL,
+       source: 'DuckDuckGo'
+      });
+     }
+    });
+   }
+   return items;
+  }
+ },
+ {
+  name: 'Wikipedia (NL)',
+  score: 80,
+  buildUrl: q => `https://nl.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`,
+  parse: data => data.extract ? [{
+   title: data.title,
+   text: data.extract,
+   url: data.content_urls?.desktop?.page || `https://nl.wikipedia.org/wiki/${encodeURIComponent(data.title)}`,
+   source: 'Wikipedia'
+  }] : []
+ },
+ {
+  name: 'Wikidata',
+  score: 85,
+  buildUrl: q => `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(q)}&language=nl&format=json&origin=*`,
+  parse: data => Array.isArray(data.search) ? data.search.slice(0, 5).map(item => ({
+   title: item.label,
+   text: item.description || 'Geen beschrijving beschikbaar.',
+   url: `https://www.wikidata.org/wiki/${item.id}`,
+   source: 'Wikidata'
+  })) : []
+ }
+];
+
+const statusEl = document.getElementById('status');
+const outEl = document.getElementById('out');
+const logEl = document.getElementById('log');
+const runBtn = document.getElementById('run');
+
+function logMessage(type, message, meta = '') {
+ const div = document.createElement('div');
+ div.className = `log-item ${type}`.trim();
+ const time = new Date().toLocaleString();
+ div.innerHTML = `<strong>${time}</strong><br>${message}${meta ? `<br><em>${meta}</em>` : ''}`;
+ logEl.prepend(div);
+}
+
+function resultCard(item, term, time, score) {
+ return `<div class="panel card">
+  <span class="tag">${item.source}</span>
+  <span class="tag">Betrouwbaarheid: ${score}</span>
+  <span class="tag">Zoekterm: ${term}</span>
+  <h3>${item.title}</h3>
+  <div>${item.text}</div>
+  <small>Tijd: ${time}</small><br>
+  <small><a href="${item.url}" target="_blank" rel="noopener">${item.url}</a></small>
+ </div>`;
+}
+
+async function fetchSource(source, query) {
+ const url = source.buildUrl(query);
+ const started = new Date().toLocaleTimeString();
+ logMessage('', `Bron gestart: ${source.name}`, `URL: ${url}`);
+ try {
+  const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!response.ok) {
+   throw new Error(`HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  logMessage('', `Bron gereed: ${source.name}`, `Start: ${started}`);
+  return source.parse(data);
+ } catch (error) {
+  logMessage('error', `Fout bij ${source.name}`, error.message);
+  return [];
+ }
+}
+
+async function runSearch() {
+ const query = document.getElementById('q').value.trim();
+ const depth = document.getElementById('depth').value;
+ if (!query) {
+  logMessage('warn', 'Geen zoekterm ingevoerd.');
+  return;
+ }
+ outEl.innerHTML = '';
+ statusEl.textContent = 'Status: scannen…';
+ logMessage('', `Scan gestart`, `Zoekterm: ${query} • Modus: ${depth}`);
+ const time = new Date().toLocaleString();
+
+ const results = [];
+ for (const source of sources) {
+  const items = await fetchSource(source, query);
+  items.forEach(item => results.push({ ...item, score: source.score }));
+  if (depth === 'fast' && results.length >= 6) {
+   break;
+  }
+ }
+
+ results
+  .sort((a, b) => b.score - a.score)
+  .forEach(item => {
+   outEl.innerHTML += resultCard(item, query, time, item.score);
+  });
+
+ if (results.length === 0) {
+  outEl.innerHTML = '<div class="panel">Geen resultaten gevonden of bronnen geblokkeerd.</div>';
+  logMessage('warn', 'Geen resultaten. Controleer netwerk of CORS-beperkingen.');
+ }
+ statusEl.textContent = 'Status: klaar';
+}
+
+runBtn.addEventListener('click', runSearch);
+</script>
+</body>
+</html>
