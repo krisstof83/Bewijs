@@ -239,6 +239,7 @@
       <div class="toolbar">
         <button id="exportJson" class="secondary" disabled>⬇️ Export JSON</button>
         <button id="exportPdf" class="secondary" disabled>⬇️ Export PDF</button>
+        <button id="exportReport" class="secondary" disabled>⬇️ Export Rapport</button>
       </div>
       <div class="status" id="statusLog"></div>
     </aside>
@@ -262,6 +263,7 @@
     const saveBtn = document.getElementById('saveBtn');
     const exportJsonBtn = document.getElementById('exportJson');
     const exportPdfBtn = document.getElementById('exportPdf');
+    const exportReportBtn = document.getElementById('exportReport');
 
     const state = {
       results: [],
@@ -276,6 +278,8 @@
       entry.style.color = tone === 'error' ? '#f87171' : '#e2e8f0';
       statusLog.prepend(entry);
     }
+
+    const apiBase = new URLSearchParams(window.location.search).get('api') || 'http://localhost:8000';
 
     function buildPayload() {
       return {
@@ -359,10 +363,11 @@
       saveBtn.disabled = true;
       exportJsonBtn.disabled = true;
       exportPdfBtn.disabled = true;
+      exportReportBtn.disabled = true;
 
       log('Zoekactie gestart: bronnen worden bevraagd...');
       try {
-        const response = await fetch('http://localhost:8000/search', {
+        const response = await fetch(`${apiBase}/search`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -392,7 +397,7 @@
       }
       log('Dossier wordt opgeslagen...');
       try {
-        const response = await fetch('http://localhost:8000/dossiers', {
+        const response = await fetch(`${apiBase}/dossiers`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(state.lastPayload),
@@ -405,6 +410,7 @@
         state.dossierId = dossier.dossier_id;
         exportJsonBtn.disabled = false;
         exportPdfBtn.disabled = false;
+        exportReportBtn.disabled = false;
         log(`Dossier opgeslagen met ID ${state.dossierId}.`);
       } catch (error) {
         log(`Fout tijdens opslaan: ${error.message}`, 'error');
@@ -416,7 +422,7 @@
         log('Geen dossier-ID beschikbaar voor export.', 'error');
         return;
       }
-      const url = `http://localhost:8000/dossiers/${state.dossierId}/export/${format}`;
+      const url = `${apiBase}/dossiers/${state.dossierId}/export/${format}`;
       window.open(url, '_blank');
       log(`Export gestart: ${format.toUpperCase()}.`);
     }
@@ -425,6 +431,7 @@
     saveBtn.addEventListener('click', saveDossier);
     exportJsonBtn.addEventListener('click', () => exportDossier('json'));
     exportPdfBtn.addEventListener('click', () => exportDossier('pdf'));
+    exportReportBtn.addEventListener('click', () => exportDossier('report'));
 
     log('Stand-by. Vul filters in en start de zoekactie.');
   </script>
