@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, HTTPException
@@ -14,14 +15,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .connectors import (
     search_duckduckgo,
     search_github,
-    search_openalex,
     search_reddit,
     search_wikipedia,
 )
-from .models import Dossier, OSINTItem, SearchRequest
-from .storage import dossier_path, load_dossier, save_dossier
+from .import_engine import build_person_reports, process_imports
+from .models import Dossier, EvidenceItem, OSINTItem, SearchRequest
+from .storage import dossier_path, load_dossier, report_path, save_dossier
 
-app = FastAPI(title="OSINT Dossier API", version="1.0")
+app = FastAPI(title="OSINT Dossier API", version="2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+IMPORT_STATE_FILE = Path(__file__).resolve().parent.parent / "data" / "import_state.json"
+IMPORT_EVIDENCE: List[EvidenceItem] = []
 
 
 def build_query(request: SearchRequest) -> str:
@@ -48,11 +52,64 @@ def build_query(request: SearchRequest) -> str:
     return " ".join(part for part in parts if part).strip()
 
 
+def dedupe_results(results: List[OSINTItem]) -> List[OSINTItem]:
+    seen: set[str] = set()
+    deduped: List[OSINTItem] = []
+    for item in results:
+        key = f"{item.source}|{item.url}|{item.summary[:140].lower()}"
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
+def split_fact_assumptions(results: List[OSINTItem]) -> tuple[List[OSINTItem], List[OSINTItem]]:
+    facts: List[OSINTItem] = []
+    assumptions: List[OSINTItem] = []
+    for item in results:
+        if item.label == "claim":
+            assumptions.append(item)
+            continue
+        lowered = item.summary.lower()
+        if any(marker in lowered for marker in ["mogelijk", "waarschijnlijk", "onbevestigd", "vermoed"]):
+            assumptions.append(item)
+        else:
+            facts.append(item)
+    return facts, assumptions
+
+
 def sort_results(results: List[OSINTItem]) -> List[OSINTItem]:
     def score(item: OSINTItem) -> tuple[float, str]:
         return (item.reliability_score, item.timestamp)
 
     return sorted(results, key=score, reverse=True)
+
+
+async def _scan_imports_loop() -> None:
+    while True:
+        try:
+            items = process_imports(IMPORT_STATE_FILE)
+            if items:
+                IMPORT_EVIDENCE.extend(items)
+        except Exception:
+            pass
+        await asyncio.sleep(10)
+
+
+@app.on_event("startup")
+async def startup() -> None:
+    IMPORT_EVIDENCE.extend(process_imports(IMPORT_STATE_FILE))
+    asyncio.create_task(_scan_imports_loop())
+
+
+@app.get("/health")
+async def health() -> dict:
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat(),
+        "imported_evidence": len(IMPORT_EVIDENCE),
+    }
 
 
 @app.post("/search", response_model=List[OSINTItem])
@@ -65,7 +122,6 @@ async def search(request: SearchRequest) -> List[OSINTItem]:
         search_wikipedia(query),
         search_reddit(query),
         search_github(query),
-        search_openalex(query),
     ]
     results: List[OSINTItem] = []
     responses = await asyncio.gather(*tasks, return_exceptions=True)
@@ -73,7 +129,7 @@ async def search(request: SearchRequest) -> List[OSINTItem]:
         if isinstance(response, Exception):
             continue
         results.extend(response)
-    return sort_results(results)
+    return sort_results(dedupe_results(results))
 
 
 @app.post("/dossiers", response_model=Dossier)
@@ -82,7 +138,17 @@ async def create_dossier(request: SearchRequest) -> Dossier:
     if not query:
         raise HTTPException(status_code=400, detail="Geen zoekterm opgegeven.")
     results = await search(request)
-    dossier = save_dossier(query=query, filters=request.filters, results=results)
+    facts, assumptions = split_fact_assumptions(results)
+    reports = build_person_reports(IMPORT_EVIDENCE)
+    dossier = save_dossier(
+        query=query,
+        filters=request.filters,
+        results=results,
+        facts=facts,
+        assumptions=assumptions,
+        evidence=IMPORT_EVIDENCE,
+        reports=reports,
+    )
     return dossier
 
 
@@ -104,6 +170,16 @@ async def export_json(dossier_id: str):
     return FileResponse(path=path, filename=path.name, media_type="application/json")
 
 
+@app.get("/dossiers/{dossier_id}/export/report")
+async def export_report(dossier_id: str):
+    try:
+        load_dossier(dossier_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Dossier niet gevonden.") from exc
+    path = report_path(dossier_id)
+    return FileResponse(path=path, filename=path.name, media_type="text/plain")
+
+
 @app.get("/dossiers/{dossier_id}/export/pdf")
 async def export_pdf(dossier_id: str):
     try:
@@ -121,6 +197,10 @@ async def export_pdf(dossier_id: str):
         Paragraph(f"Dossier ID: {dossier.dossier_id}", styles["Normal"]),
         Paragraph(f"Zoekterm: {dossier.query}", styles["Normal"]),
         Paragraph(f"Gegenereerd: {datetime.utcnow().isoformat()}", styles["Normal"]),
+        Spacer(1, 12),
+        Paragraph(f"Feiten: {len(dossier.facts)}", styles["Normal"]),
+        Paragraph(f"Aannames: {len(dossier.assumptions)}", styles["Normal"]),
+        Paragraph(f"Bewijsstukken: {len(dossier.evidence)}", styles["Normal"]),
         Spacer(1, 12),
     ]
     for item in dossier.results:
