@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSINT Dossieronderzoek</title>
+  <style>
+    :root {
+      --bg: #05070c;
+      --panel: #0b1020;
+      --panel-2: #0f172a;
+      --glass: rgba(255, 255, 255, 0.04);
+      --neon: #22d3ee;
+      --pink: #ec4899;
+      --green: #22c55e;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at 10% -10%, #0ff2, transparent),
+        radial-gradient(1200px 600px at 90% 10%, #f0f2, transparent),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(90deg, #020617, #020617aa);
+      border-bottom: 1px solid #1f2937;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--neon), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header .actions {
+      display: flex;
+      gap: 8px;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      min-height: calc(100vh - 66px);
+    }
+    aside {
+      padding: 16px;
+      background: var(--panel);
+      border-right: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .panel {
+      padding: 16px;
+      background: var(--panel-2);
+      border-radius: 16px;
+      border: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: #020617;
+      border: 1px solid #1f2937;
+      color: var(--text);
+      border-radius: 10px;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--neon);
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(90deg, var(--neon), var(--pink));
+      border: none;
+      color: #020617;
+      font-weight: 700;
+      box-shadow: 0 0 20px #22d3ee55;
+      transition: 0.2s;
+    }
+    button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px #ec489988;
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #1f2937;
+      color: var(--text);
+      box-shadow: none;
+    }
+    section {
+      padding: 16px;
+      overflow: auto;
+      position: relative;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: linear-gradient(180deg, var(--glass), transparent);
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px #000;
+    }
+    .card h3 {
+      margin: 0 0 6px 0;
+      color: var(--neon);
+      font-size: 16px;
+    }
+    .card p {
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+    }
+    .card small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+    }
+    .card a {
+      color: var(--pink);
+      text-decoration: none;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+    }
+    .pill.fact {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .pill.claim {
+      border-color: var(--pink);
+      color: var(--pink);
+    }
+    .pill.source {
+      border-color: var(--neon);
+      color: var(--neon);
+    }
+    .status-log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      max-height: 40vh;
+      overflow-y: auto;
+    }
+    .status-hint {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .log-entry {
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #1f2937;
+    }
+    .log-entry.error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .timeline-item {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: rgba(2, 6, 23, 0.8);
+    }
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 32px;
+      border: 1px dashed #1f2937;
+      border-radius: 16px;
+    }
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 3px
+      );
+      pointer-events: none;
+      animation: scan 6s linear infinite;
+    }
+    @keyframes scan {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: 0 100%;
+      }
+    }
+    @media (max-width: 1200px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        border-right: none;
+        border-bottom: 1px solid #1f2937;
+      }
+    }
+    @media print {
+      header, aside, .scanline, .actions {
+        display: none;
+      }
+      body {
+        background: white;
+        color: black;
+      }
+      section {
+        padding: 0;
+      }
+      .card {
+        border: 1px solid #333;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OSINT Dossieronderzoek</h1>
+    <div class="actions">
+      <button class="secondary" id="export-json">Export JSON</button>
+      <button class="secondary" id="export-pdf">Export PDF</button>
+    </div>
+  </header>
+  <main>
+    <aside>
+      <div class="panel">
+        <label for="query">Zoekterm</label>
+        <input id="query" placeholder="Zoekterm" />
+        <label for="name">Naamfilter</label>
+        <input id="name" placeholder="Naam" />
+        <label for="email">E-mailfilter</label>
+        <input id="email" placeholder="E-mail" />
+        <label for="phone">Telefoonfilter</label>
+        <input id="phone" placeholder="Telefoon" />
+        <label for="domain">Domeinfilter</label>
+        <input id="domain" placeholder="Domein" />
+        <label for="date-from">Datum van</label>
+        <input id="date-from" type="date" />
+        <label for="date-to">Datum tot</label>
+        <input id="date-to" type="date" />
+        <button id="run-search">Start OSINT-scan</button>
+        <small class="status-hint">Modules: DuckDuckGo, GitHub, Reddit, Wikipedia</small>
+      </div>
+      <div class="panel">
+        <label>Status log</label>
+        <div class="status-log" id="status-log"></div>
+      </div>
+    </aside>
+    <section>
+      <div class="grid" id="results"></div>
+      <div class="scanline"></div>
+    </section>
+    <aside>
+      <div class="panel">
+        <label>Tijdlijn</label>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const resultsEl = document.getElementById("results");
+    const timelineEl = document.getElementById("timeline");
+    const logEl = document.getElementById("status-log");
+    const exportJsonBtn = document.getElementById("export-json");
+    const exportPdfBtn = document.getElementById("export-pdf");
+
+    let lastResults = [];
+
+    function logStatus(message, type = "info") {
+      const entry = document.createElement("div");
+      entry.className = `log-entry ${type === "error" ? "error" : ""}`;
+      entry.textContent = `${new Date().toLocaleString()} • ${message}`;
+      logEl.prepend(entry);
+    }
+
+    function buildPayload() {
+      return {
+        query: document.getElementById("query").value.trim(),
+        filters: {
+          name: document.getElementById("name").value.trim() || null,
+          email: document.getElementById("email").value.trim() || null,
+          phone: document.getElementById("phone").value.trim() || null,
+          domain: document.getElementById("domain").value.trim() || null,
+          date_from: document.getElementById("date-from").value || null,
+          date_to: document.getElementById("date-to").value || null,
+        },
+      };
+    }
+
+    function labelClass(label) {
+      if (label === "feit") return "fact";
+      if (label === "claim") return "claim";
+      return "source";
+    }
+
+    function renderResults(results) {
+      resultsEl.innerHTML = "";
+      if (!results.length) {
+        resultsEl.innerHTML = '<div class="empty">Geen resultaten gevonden.</div>';
+        return;
+      }
+      results.forEach((result) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${result.source}</h3>
+          <p>${result.summary}</p>
+          <div class="meta">
+            <span class="pill ${labelClass(result.label)}">${result.label}</span>
+            <span class="pill">Betrouwbaarheid ${Math.round(result.reliability_score * 100)}%</span>
+            <span class="pill">Relevantie ${Math.round(result.relevance_score * 100)}%</span>
+          </div>
+          <small>Zoekterm: ${result.query}</small>
+          <small>Timestamp: ${new Date(result.timestamp).toLocaleString()}</small>
+          <small>Resultaat: ${result.url ? `<a href="${result.url}" target="_blank">${result.url}</a>` : "Geen URL"}</small>
+        `;
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function renderTimeline(results) {
+      timelineEl.innerHTML = "";
+      if (!results.length) {
+        timelineEl.innerHTML = '<div class="empty">Geen tijdlijn-items.</div>';
+        return;
+      }
+      const sorted = [...results].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      sorted.forEach((result) => {
+        const item = document.createElement("div");
+        item.className = "timeline-item";
+        item.innerHTML = `
+          <strong>${new Date(result.timestamp).toLocaleString()}</strong>
+          <div>${result.source} • ${result.summary}</div>
+          <small>Label: ${result.label} • Betrouwbaarheid ${Math.round(result.reliability_score * 100)}%</small>
+        `;
+        timelineEl.appendChild(item);
+      });
+    }
+
+    async function runSearch() {
+      const payload = buildPayload();
+      if (!payload.query) {
+        logStatus("Zoekterm ontbreekt.", "error");
+        return;
+      }
+      logStatus("OSINT-scan gestart.");
+      resultsEl.innerHTML = '<div class="empty">Scannen...</div>';
+      timelineEl.innerHTML = '<div class="empty">Scannen...</div>';
+
+      try {
+        const response = await fetch("http://localhost:8000/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          throw new Error(`Serverfout: ${response.status}`);
+        }
+        const data = await response.json();
+        lastResults = data.results || [];
+        renderResults(lastResults);
+        renderTimeline(lastResults);
+        logStatus(`Resultaten ontvangen: ${lastResults.length}.`);
+        (data.dossier_saved || []).forEach((path) => logStatus(`Dossier opgeslagen: ${path}`));
+        (data.errors || []).forEach((err) => logStatus(err, "error"));
+      } catch (error) {
+        logStatus(`Fout: ${error.message}`, "error");
+        resultsEl.innerHTML = '<div class="empty">Fout tijdens ophalen.</div>';
+        timelineEl.innerHTML = '<div class="empty">Fout tijdens ophalen.</div>';
+      }
+    }
+
+    function exportJson() {
+      if (!lastResults.length) {
+        logStatus("Geen resultaten om te exporteren.", "error");
+        return;
+      }
+      const blob = new Blob([JSON.stringify({ generated_at: new Date().toISOString(), results: lastResults }, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `osint-dossier-${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      logStatus("JSON-export gestart.");
+    }
+
+    function exportPdf() {
+      if (!lastResults.length) {
+        logStatus("Geen resultaten om te exporteren.", "error");
+        return;
+      }
+      logStatus("PDF-export gestart (printdialog)." );
+      window.print();
+    }
+
+    document.getElementById("run-search").addEventListener("click", runSearch);
+    exportJsonBtn.addEventListener("click", exportJson);
+    exportPdfBtn.addEventListener("click", exportPdf);
+  </script>
+</body>
+</html>
