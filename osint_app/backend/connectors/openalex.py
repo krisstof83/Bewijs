@@ -1,43 +1,35 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
 
 import httpx
 
-from ..models import OSINTItem
+from ..models.models import OSINTItem
 
 
-async def search_openalex(query: str) -> List[OSINTItem]:
+async def search(query: str) -> list[OSINTItem]:
     if not query:
         return []
-    url = "https://api.openalex.org/works"
-    params = {"search": query, "per-page": 5}
-    headers = {"User-Agent": "OSINT-Dossier/1.0"}
-    async with httpx.AsyncClient(timeout=12.0) as client:
-        response = await client.get(url, params=params, headers=headers)
-        response.raise_for_status()
-        payload = response.json()
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get("https://api.openalex.org/works", params={"search": query, "per-page": 5})
+            resp.raise_for_status()
+            results = resp.json().get("results", [])[:5]
+    except Exception:
+        return []
 
-    timestamp = datetime.utcnow().isoformat()
-    items: List[OSINTItem] = []
-    for work in payload.get("results", [])[:5]:
-        title = work.get("display_name")
-        if not title:
-            continue
+    ts = datetime.utcnow().isoformat()
+    items: list[OSINTItem] = []
+    for result in results:
         items.append(
             OSINTItem(
-                source="OpenAlex",
-                timestamp=timestamp,
-                reliability_score=0.76,
-                label="feit",
-                summary=title,
-                url=work.get("id", "https://openalex.org"),
+                source="openalex",
+                title=result.get("display_name", "openalex result"),
+                summary=f"Citations: {result.get('cited_by_count', 0)}",
+                url=result.get("id", "https://openalex.org"),
                 query=query,
-                metadata={
-                    "publication_year": work.get("publication_year"),
-                    "cited_by_count": work.get("cited_by_count"),
-                },
+                timestamp=ts,
+                reliability_score=0.67,
             )
         )
     return items
