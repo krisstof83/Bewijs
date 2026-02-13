@@ -1,0 +1,21 @@
+:root { font-family: Arial, sans-serif; color-scheme: light; }
+body { margin: 0; background: #f3f5f9; color: #14213d; }
+header { padding: 12px; background: #0b3a67; color: white; text-align: center; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px; }
+.tabs button { padding: 12px; border: 0; border-radius: 10px; background: #dce6f2; font-weight: 700; }
+.tabs button.active { background: #0b3a67; color: white; }
+main { padding: 10px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.cards { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.cards article { background: white; border-radius: 10px; padding: 10px; box-shadow: 0 2px 7px rgba(0,0,0,.08); }
+ul { list-style: none; padding: 0; margin: 0; }
+li { background: white; margin-bottom: 8px; border-radius: 10px; padding: 10px; }
+input, button { font-size: 16px; }
+#osint-form { display: flex; gap: 8px; margin-bottom: 10px; }
+#osint-form input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #bfc9d9; }
+#osint-form button { padding: 10px 14px; border: 0; border-radius: 8px; background: #0b3a67; color: white; }
+@media (min-width: 768px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  main { max-width: 900px; margin: 0 auto; }
+}
