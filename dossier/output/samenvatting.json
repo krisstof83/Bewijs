@@ -1,0 +1,37 @@
+{
+  "rapport_id": "bba540fbea241958",
+  "gegenereerd_op": "2026-02-18T23:18:38.495Z",
+  "dossier_pad": "/workspace/b1fe1c91-654f-476c-ac96-c11793b8464b/sessions/agent_f3a6d691-3514-4d97-bc46-64b29fc94bb4/dossier",
+  "statistieken": {
+    "totaal_bestanden": 3,
+    "totaal_bewijs_items": 3,
+    "totaal_tijdlijn_gebeurtenissen": 20,
+    "totaal_inconsistenties": 1,
+    "totaal_risicos": 3
+  },
+  "samenvatting": "Het forensisch dossier bevat 3 bewijsstuk(ken) met 20 tijdlijngebeurtenissen. Er zijn 1 inconsistentie(s) en 3 risico('s) geïdentificeerd (waarvan 0 kritiek en 1 hoog). Algehele dossierstatus: **AANDACHT VEREIST**.",
+  "conclusies": [
+    "Van de 3 bewijsstukken hebben 0 een hoog bewijsgewicht en 3 een hoge juridische relevantie.",
+    "De tijdlijn beslaat de periode van 2023-11-20 tot 2026-02-18 met 20 geregistreerde gebeurtenissen.",
+    "Er zijn 1 tijdsgat(en) gedetecteerd. Het grootste gat bedraagt 674 dagen (2024-04-15 → 2026-02-18).",
+    "Er zijn 1 inconsistentie(s) gedetecteerd, waarvan 1 van hoge of kritieke ernst. Deze vereisen nader onderzoek."
+  ],
+  "aanbevelingen": [
+    "[HOOG] Los de gedetecteerde inconsistenties op door aanvullend bewijs te verzamelen.",
+    "[INCONSISTENTIE] Verifieer welke stelling correct is door aanvullend bewijs te verzamelen."
+  ],
+  "risico_niveaus": {
+    "kritiek": 0,
+    "hoog": 1,
+    "middel": 2,
+    "laag": 0
+  },
+  "bewijs_ids": [
+    "3d7fa74a76c79ecaa282b4ba05d7b133",
+    "ed6e11a6417ab7859c66d5a944ff919b",
+    "8a82ca62adb54102d92957bf229d8ae1"
+  ],
+  "inconsistentie_types": [
+    "feit_tegenspraak"
+  ]
+}
