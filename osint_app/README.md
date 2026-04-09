@@ -45,6 +45,27 @@ uvicorn main:app --reload
 - `GET /evidence/list`
 - `GET /timeline`
 - `POST /osint/search`
+- `POST /forensic/command`
+
+## Forensische commando's
+`POST /forensic/command` ondersteunt:
+
+- `ANALYSE STARTEN` → volledige scan + bewijsindex + tijdlijn + rapportexport
+- `SCENARIO'S TONEN` → scenarioanalyse met tegenpartij-inschatting
+- `EINDRAPPORT` → volledige juridisch gestructureerde rapportage
+
+Voorbeeld payload:
+
+```json
+{
+  "command": "EINDRAPPORT",
+  "root_path": "/workspace/Bewijs"
+}
+```
+
+Rapportartefacten worden automatisch weggeschreven naar `dossiers/reports/`:
+- `forensic_report.json`
+- `forensic_report.md`
 
 ## Automatische pipeline
 Bij startup en periodiek:

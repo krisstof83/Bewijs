@@ -12,14 +12,33 @@ if __package__ in {None, ""}:
 
     sys.path.append(str(Path(__file__).resolve().parents[2]))
     from osint_app.backend.engines.auto_engine import get_current_state, run_full_auto_pipeline
-    from osint_app.backend.models.models import DashboardSummary, EvidenceItem, OSINTItem, SearchRequest, TimelineEvent
+    from osint_app.backend.forensic import build_forensic_report, write_markdown_report, write_report_artifacts
+    from osint_app.backend.models.models import (
+        DashboardSummary,
+        EvidenceItem,
+        ForensicCommandRequest,
+        ForensicReport,
+        OSINTItem,
+        SearchRequest,
+        TimelineEvent,
+    )
     from osint_app.backend.services.dashboard_service import generate_dashboard_summary
     from osint_app.backend.services.osint_service import search_osint
 else:
     from .engines.auto_engine import get_current_state, run_full_auto_pipeline
-    from .models.models import DashboardSummary, EvidenceItem, OSINTItem, SearchRequest, TimelineEvent
+    from .forensic import build_forensic_report, write_markdown_report, write_report_artifacts
+    from .models.models import (
+        DashboardSummary,
+        EvidenceItem,
+        ForensicCommandRequest,
+        ForensicReport,
+        OSINTItem,
+        SearchRequest,
+        TimelineEvent,
+    )
     from .services.dashboard_service import generate_dashboard_summary
     from .services.osint_service import search_osint
+from pathlib import Path
 
 app = FastAPI(title="Auto Forensic OSINT Dossier Platform", version="4.0")
 app.add_middleware(
@@ -80,3 +99,13 @@ async def osint_search(request: SearchRequest) -> list[OSINTItem]:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/forensic/command", response_model=ForensicReport)
+async def forensic_command(request: ForensicCommandRequest) -> ForensicReport:
+    root_path = Path(request.root_path).resolve() if request.root_path else Path.cwd().resolve()
+    report = build_forensic_report(request.command, root_path)
+    artifacts_dir = root_path / "dossiers" / "reports"
+    write_report_artifacts(report, artifacts_dir)
+    write_markdown_report(report, artifacts_dir)
+    return report

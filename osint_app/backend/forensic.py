@@ -11,7 +11,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from .models import (
+from .models.models import (
     CounterpartyScenario,
     ForensicEvidenceIndexItem,
     ForensicReport,
@@ -25,6 +25,7 @@ from .models import (
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".html", ".json", ".csv", ".png", ".jpg", ".jpeg"}
 PERSONS = ["Kristof Huibers", "Anneke Coenen", "Yolanda Dello"]
 DATE_REGEX = r"\b(20\d{2}-\d{2}-\d{2})\b"
+SUPPORTED_COMMANDS = {"ANALYSE STARTEN", "SCENARIO'S TONEN", "EINDRAPPORT"}
 
 LABEL_PATTERNS = {
     "[FEIT]": ["volgens", "bevestigd", "proces-verbaal", "bijlage", "bewijs"],
@@ -271,15 +272,27 @@ def _privacy_assessment(scans: list[FileScan]) -> PrivacyAssessment:
 
 
 def build_forensic_report(command: str, root_path: Path) -> ForensicReport:
+    normalized_command = command.strip().upper()
+    if normalized_command not in SUPPORTED_COMMANDS:
+        normalized_command = "ANALYSE STARTEN"
+
     scans = scan_repository(root_path)
     chronology, gaps = _build_timeline(scans)
     profiles, labeled = _build_profiles(scans)
     scenarios = _build_scenarios()
     privacy = _privacy_assessment(scans)
 
+    if normalized_command == "SCENARIO'S TONEN":
+        chronology = []
+        gaps = []
+        labeled = []
+        profiles = []
+    elif normalized_command == "EINDRAPPORT":
+        pass
+
     return ForensicReport(
         generated_at=datetime.utcnow().isoformat(),
-        command=command,
+        command=normalized_command,
         dossier_overview=f"Volledige scan uitgevoerd over {len(scans)} potentiële bewijsbestanden.",
         evidence_index=[scan.item for scan in scans],
         chronology=chronology,
@@ -308,4 +321,87 @@ def write_report_artifacts(report: ForensicReport, target_dir: Path) -> Path:
     target_dir.mkdir(parents=True, exist_ok=True)
     output = target_dir / "forensic_report.json"
     output.write_text(json.dumps(report.model_dump(), ensure_ascii=False, indent=2), encoding="utf-8")
+    return output
+
+
+def render_legal_markdown(report: ForensicReport) -> str:
+    lines: list[str] = []
+    lines.append("# Forensisch-juridisch eindrapport")
+    lines.append("")
+    lines.append("## Dossieroverzicht")
+    lines.append(report.dossier_overview)
+    lines.append("")
+    lines.append("## Personen & Rollen")
+    for profile in report.profiles:
+        lines.append(f"- **{profile.person}**: primair geprofileerd op basis van bronuitspraken en dossierinhoud.")
+    if not report.profiles:
+        lines.append("- Geen persoonsprofielen opgenomen voor dit commando.")
+    lines.append("")
+    lines.append("## Chronologie")
+    for event in report.chronology[:50]:
+        lines.append(f"- {event.timestamp}: {event.title} ({', '.join(event.related_evidence_ids)})")
+    if not report.chronology:
+        lines.append("- Niet van toepassing voor dit commando.")
+    lines.append("")
+    lines.append("## Feiten vs Meningen")
+    for statement in report.labeled_statements[:120]:
+        lines.append(f"- {statement.label} {statement.person}: {statement.statement} [bron: {statement.source_evidence_id}]")
+    if not report.labeled_statements:
+        lines.append("- Niet van toepassing voor dit commando.")
+    lines.append("")
+    lines.append("## Gedragsanalyse per persoon")
+    for profile in report.profiles:
+        lines.append(f"### {profile.person}")
+        lines.append(f"- Feiten: {len(profile.facts)}")
+        lines.append(f"- Gedragsveranderingen: {len(profile.behavior_changes)}")
+        lines.append(f"- Inconsistenties: {len(profile.inconsistencies)}")
+        lines.append(f"- Motieven: {len(profile.motives)}")
+        lines.append(f"- Mogelijke belangen: {len(profile.possible_interests)}")
+        lines.append(f"- Medische context: {len(profile.medical_context)}")
+    if not report.profiles:
+        lines.append("- Niet van toepassing voor dit commando.")
+    lines.append("")
+    lines.append("## Inconsistenties & Verdraaiingen")
+    inconsistencies = [s for s in report.labeled_statements if s.label == "[VERDRAAIING]"][:80]
+    for item in inconsistencies:
+        lines.append(f"- {item.person}: {item.statement} [bron: {item.source_evidence_id}]")
+    if not inconsistencies:
+        lines.append("- Geen expliciet gelabelde [VERDRAAIING] gedetecteerd binnen scanbeperkingen.")
+    lines.append("")
+    lines.append("## Juridische relevantie")
+    for item in report.legal_relevance:
+        lines.append(f"- {item}")
+    lines.append("")
+    lines.append("## Risico’s bij framing of misbruik")
+    for item in report.framing_risks:
+        lines.append(f"- {item}")
+    lines.append("")
+    lines.append("## Samenvatting voor advocaat / rechter")
+    lines.append(report.lawyer_summary)
+    lines.append("")
+    lines.append("## Actieve dossierstatus")
+    lines.append(report.active_status)
+    lines.append("")
+    lines.append("## Bewijsindex (samenvatting)")
+    for evidence in report.evidence_index[:120]:
+        lines.append(
+            f"- {evidence.evidence_id} | {evidence.file_type} | {evidence.legal_relevance}/{evidence.evidentiary_weight} | {evidence.file_path}"
+        )
+    lines.append("")
+    lines.append("## AVG / GBA-toets")
+    lines.append(f"- Persoonsgegevens: {', '.join(report.privacy_assessment.personal_data_detected) or 'geen patroon gedetecteerd'}")
+    for basis in report.privacy_assessment.processing_basis:
+        lines.append(f"- Rechtsgrond: {basis}")
+    for risk in report.privacy_assessment.risks:
+        lines.append(f"- Risico: {risk}")
+    for safeguard in report.privacy_assessment.safeguards:
+        lines.append(f"- Maatregel: {safeguard}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_markdown_report(report: ForensicReport, target_dir: Path) -> Path:
+    target_dir.mkdir(parents=True, exist_ok=True)
+    output = target_dir / "forensic_report.md"
+    output.write_text(render_legal_markdown(report), encoding="utf-8")
     return output
