@@ -158,15 +158,31 @@ section {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid #1e293b;
     border-radius: 8px;
-    padding: 2rem;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     backdrop-filter: blur(10px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     border-color: #334155;
+}
+
+.card-img {
+    height: 160px;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid #1e293b;
+}
+
+.card-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .card h3 {
@@ -179,6 +195,7 @@ section {
     color: #94a3b8;
     line-height: 1.6;
     margin-bottom: 1.5rem;
+    flex-grow: 1;
 }
 
 .card .link {
@@ -238,27 +255,40 @@ footer {
         <h2 class="section-title">Dossier Overzicht</h2>
         <div class="grid">
             <div class="card">
-                <h3>Master Bewijsbundel</h3>
-                <p>Geconsolideerde bundel van alle aangeleverde bestanden (PDF, IMG, AUDIO, VIDEO). Bevat het master bewijsregister en juridische bewijstabel.</p>
-                <a href="Bewijsbundel_ALL_V1.html" class="link">Open Bundel</a>
+                <div class="card-img" style="background-image: url('Bewijs_Desk_Image.jpg');"></div>
+                <div class="card-content">
+                    <h3>Master Bewijsbundel</h3>
+                    <p>Geconsolideerde bundel van alle aangeleverde bestanden (PDF, IMG, AUDIO, VIDEO). Bevat het master bewijsregister en juridische bewijstabel.</p>
+                    <a href="Bewijsbundel_ALL_V1.html" class="link">Open Bundel</a>
+                </div>
             </div>
 
             <div class="card">
-                <h3>HUD Bewijsbundel Site</h3>
-                <p>Uitgebreide web-weergave met 20 secties, inclusief narratieve samenvatting, tijdlijn, risico & kansen matrix en cognitieve analyse.</p>
-                <a href="HUD_Bewijsbundel_site.html" class="link">Open HUD</a>
+                <div class="card-img" style="background-image: url('Gemini_Generated_Image.png');"></div>
+                <div class="card-content">
+                    <h3>HUD Bewijsbundel Site</h3>
+                    <p>Uitgebreide web-weergave met 20 secties, inclusief narratieve samenvatting, tijdlijn, risico & kansen matrix en cognitieve analyse.</p>
+                    <a href="HUD_Bewijsbundel_site.html" class="link">Open HUD</a>
+                </div>
             </div>
 
             <div class="card">
-                <h3>Interactieve Checklist</h3>
-                <p>Actiepunten en status tracking voor de voortgang van het dossier en juridische stappen.</p>
-                <a href="Checklist_Interactief_Kristof.html" class="link">Open Checklist</a>
+                <!-- Using a default gradient or similar style for checklist since we have 3 images for 4 cards -->
+                <div class="card-img" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);"></div>
+                <div class="card-content">
+                    <h3>Interactieve Checklist</h3>
+                    <p>Actiepunten en status tracking voor de voortgang van het dossier en juridische stappen.</p>
+                    <a href="Checklist_Interactief_Kristof.html" class="link">Open Checklist</a>
+                </div>
             </div>
 
              <div class="card">
-                <h3>OSINT Zoekplatform</h3>
-                <p>Forensisch zoekplatform voor open-source intelligence (OSINT) om aanvullende informatie te verifiëren.</p>
-                <a href="index.html" class="link">Open OSINT</a>
+                <div class="card-img" style="background-image: url('Cyber_Security_Image.jpg');"></div>
+                <div class="card-content">
+                    <h3>OSINT Zoekplatform</h3>
+                    <p>Forensisch zoekplatform voor open-source intelligence (OSINT) om aanvullende informatie te verifiëren.</p>
+                    <a href="index.html" class="link">Open OSINT</a>
+                </div>
             </div>
         </div>
     </section>
