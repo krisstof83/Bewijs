@@ -11,11 +11,41 @@ async function scanPDFs() {
   const homeDir = app.getPath('home');
   const files = glob.sync(path.join(homeDir, '**/*.pdf').replace(/\\/g, '/'))
   document.getElementById('result').innerHTML = `Gevonden: ${files.length} PDF’s`
-  for (const f of files) {
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
-    const stats = fs.statSync(f);
-    db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash])
-  }
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    let completed = 0;
+    let errorOccurred = false;
+    for (const f of files) {
+      try {
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+        const stats = fs.statSync(f);
+        db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash], (err) => {
+          completed++;
+          if (err) {
+            console.error('Error inserting file:', err);
+            errorOccurred = true;
+          }
+          if (completed === files.length) {
+            if (errorOccurred) {
+              db.run('ROLLBACK');
+            } else {
+              db.run('COMMIT');
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error processing file:', err);
+        completed++;
+        errorOccurred = true;
+        if (completed === files.length) {
+          db.run('ROLLBACK');
+        }
+      }
+    }
+    if (files.length === 0) {
+      db.run('COMMIT');
+    }
+  });
 }
 
 async function buildMaster() {
