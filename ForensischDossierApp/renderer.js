@@ -11,11 +11,22 @@ async function scanPDFs() {
   const homeDir = app.getPath('home');
   const files = glob.sync(path.join(homeDir, '**/*.pdf').replace(/\\/g, '/'))
   document.getElementById('result').innerHTML = `Gevonden: ${files.length} PDF’s`
-  for (const f of files) {
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
-    const stats = fs.statSync(f);
-    db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash])
-  }
+  // ⚡ Bolt: Wrapped multiple DB inserts in a single transaction with a prepared statement.
+  // This prevents SQLite from creating a new transaction/fsync for every file, significantly reducing I/O overhead.
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    const stmt = db.prepare('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)');
+    try {
+      for (const f of files) {
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
+        const stats = fs.statSync(f);
+        stmt.run([f, path.basename(f), stats.birthtime, hash]);
+      }
+    } finally {
+      stmt.finalize();
+      db.run('COMMIT');
+    }
+  });
 }
 
 async function buildMaster() {
