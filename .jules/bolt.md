@@ -1,0 +1,3 @@
+## 2024-05-24 - [Tesseract.js Initialization Overhead]
+**Learning:** The static convenience method `Tesseract.recognize()` from the `tesseract.js` package initializes a new web worker, loads the core engine, and downloads/parses language models on every single call. In a batch processing context like scanning files, this overhead (~300-500ms) becomes a severe bottleneck.
+**Action:** When using `tesseract.js`, always use a lazily initialized, shared worker instance via `Tesseract.createWorker()` and reuse it across multiple calls using the Promise-based singleton pattern to optimize performance. Avoid `Tesseract.recognize()` in iterative or frequent call paths.
