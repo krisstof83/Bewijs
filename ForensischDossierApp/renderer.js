@@ -11,11 +11,25 @@ async function scanPDFs() {
   const homeDir = app.getPath('home');
   const files = glob.sync(path.join(homeDir, '**/*.pdf').replace(/\\/g, '/'))
   document.getElementById('result').innerHTML = `Gevonden: ${files.length} PDF’s`
-  for (const f of files) {
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
-    const stats = fs.statSync(f);
-    db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash])
-  }
+
+  db.serialize(() => {
+    // Wrap in a single transaction for significantly better database insertion performance
+    db.run('BEGIN TRANSACTION');
+    const stmt = db.prepare('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)');
+    try {
+      for (const f of files) {
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
+        const stats = fs.statSync(f);
+        stmt.run([f, path.basename(f), stats.birthtime, hash], (err) => {
+          if (err) console.error("Error inserting file:", err);
+        });
+      }
+    } finally {
+      // Ensure statement is finalized and transaction committed, as per memory rules
+      stmt.finalize();
+      db.run('COMMIT');
+    }
+  });
 }
 
 async function buildMaster() {
