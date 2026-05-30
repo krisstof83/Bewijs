@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online HTML Dossier Previewer</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --cloud: #8b5cf6;
+            --cloud-hover: #7c3aed;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Voorkom scrollen van hele pagina op desktop */
+        }
+
+        .header {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        h1 { font-size: 1.5rem; color: var(--primary); margin-bottom: 10px; }
+        p { font-size: 0.95rem; color: #64748b; margin-bottom: 15px; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #f1f5f9;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-save { background: var(--success); color: white; }
+        .btn-save:hover { background: var(--success-hover); }
+        .btn-new-tab { background: #3b82f6; color: white; }
+        .btn-new-tab:hover { background: #2563eb; }
+        .btn-cloud { background: var(--cloud); color: white; }
+        .btn-cloud:hover { background: var(--cloud-hover); }
+        
+        /* Google Drive knop styling */
+        .btn-drive { background: #4285F4; color: white; }
+        .btn-drive:hover { background: #1a73e8; }
+        
+        .btn-small { padding: 5px 10px; font-size: 0.85rem; }
+        .btn-del { background: var(--danger); color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;}
+        .btn-del:hover { background: var(--danger-hover); }
+
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            color: var(--primary);
+            background: #e0e7ff;
+            margin-bottom: 20px;
+            font-weight: bold;
+            cursor: grab;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .drop-zone.dragover { background: #c7d2fe; transform: scale(1.01); border-style: solid; }
+
+        .workspace {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0; /* Cruciaal voor flexbox scrolling binnen panels */
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .sidebar { width: 280px; flex-shrink: 0; }
+        .editor-panel { flex: 1; min-width: 300px; }
+        .preview-panel { flex: 1; min-width: 300px; }
+
+        .panel-header {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            padding: 0;
+            margin: 0;
+        }
+        .file-list li {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .file-list li:hover { background: #f1f5f9; }
+        .file-list li.active { background: #e0e7ff; border-left: 4px solid var(--primary); font-weight: bold; }
+        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+        .badge.local { background: #bbf7d0; color: #166534; }
+        .badge.cloud { background: #e9d5ff; color: #6b21a8; }
+
+        textarea {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            background: #1e293b;
+            color: #f8fafc;
+            outline: none;
+        }
+
+        iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* Toast Notificaties */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 9999;
+        }
+        .toast {
+            min-width: 250px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .toast.success { background-color: var(--success); }
+        .toast.error { background-color: var(--danger); }
+        .toast.info { background-color: var(--primary); }
+
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobiele Weergave */
+        @media (max-width: 1000px) {
+            body { overflow: auto; height: auto; min-height: 100vh; }
+            .workspace { flex-direction: column; }
+            .sidebar { width: 100%; height: 350px; flex: none; }
+            .editor-panel, .preview-panel { min-height: 450px; flex: none; }
+            .controls button, .controls input { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="header">
+        <h1>☁️ Online HTML Dossier Previewer</h1>
+        <p>Bewerk, bekijk en bewaar je HTML bestanden lokaal of veilig in de Cloud.</p>
+        
+        <div class="controls">
+            <input type="file" id="fileInput" accept=".html, .htm, .txt" multiple title="Kies bestanden van je computer">
+            <button class="btn-save" onclick="saveFileLocal()">💾 Download Lokaal</button>
+            <button class="btn-new-tab" onclick="openInNewTab()">🚀 Live View in Browser</button>
+            <button class="btn-cloud" onclick="saveToCloud()">☁️ Opslaan in Cloud</button>
+            <button class="btn-drive" onclick="saveToGoogleDrive()">📁 Opslaan in Drive</button>
+        </div>
+    </div>
+
+    <div id="dropZone" class="drop-zone">
+        ⬇️ Sleep bestanden (HTML/tekst) of links hierheen om ze in te laden of te verzamelen ⬇️
+    </div>
+
+    <div class="workspace">
+        <!-- Sidebar -->
+        <div class="panel sidebar">
+            <div class="panel-header" style="background: #e9d5ff; color: #6b21a8;">
+                <span>☁️ Cloud Bestanden</span>
+                <span id="cloudStatus" style="font-size: 0.8em; font-weight: normal;">Laden...</span>
+            </div>
+            <ul id="cloudList" class="file-list" style="flex: 0.5; border-bottom: 2px solid var(--border);">
+                <!-- Cloud items -->
+            </ul>
+
+            <div class="panel-header">
+                <span>💻 Lokale Sessie</span>
+            </div>
+            <ul id="localList" class="file-list" style="flex: 0.5;">
+                <li style="padding:15px;color:#64748b;text-align:center;font-style:italic;">Geen lokale bestanden.</li>
+            </ul>
+        </div>
+
+        <!-- Editor & Verzamelvak -->
+        <div class="panel editor-panel">
+            <div class="panel-header">
+                <span id="editorTitle">Code View (Nieuw Bestand)</span>
+            </div>
+            <textarea id="htmlCode" placeholder="Typ of wijzig hier HTML code... Live preview update automatisch!"></textarea>
+            
+            <div class="panel-header" style="border-top: 2px solid var(--border);">
+                <span>📦 Verzamelvak</span>
+                <button class="btn-save btn-small" onclick="downloadCollection()">💾 Download</button>
+            </div>
+            <textarea id="collectionCode" style="flex: none; height: 120px;" placeholder="Gedropte bestanden of links worden hier verzameld om ze aan elkaar te plakken..."></textarea>
+        </div>
+
+        <!-- Preview -->
+        <div class="panel preview-panel">
+            <div class="panel-header">
+                <span>Live Preview</span>
+            </div>
+            <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>
+        </div>
+    </div>
+
+    <!-- Google Drive API Scripts (Versimpeld naar enkel GIS) -->
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- TOAST NOTIFICATIES ---
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // --- APP STATE ---
+        const htmlCode = document.getElementById('htmlCode');
+        const previewFrame = document.getElementById('previewFrame');
+        const collectionCode = document.getElementById('collectionCode');
+        const editorTitle = document.getElementById('editorTitle');
+        
+        let localItems = [];
+        let cloudItems = [];
+        let activeItem = { source: null, id: null, index: -1 };
+
+        // --- FIREBASE INITIALISATIE ---
+        let db, auth, currentUser = null;
+        let unsubscribeCloud = null;
+
+        // --- GOOGLE DRIVE CONFIGURATIE ---
+        const GOOGLE_CLIENT_ID = '394781043999-l3qmd33vub6qnk7m07nmpvt192c5qlnl.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file'; 
+
+        let tokenClient;
+        let gisInited = false;
+        let currentUploadContent = '';
+
+        window.saveToGoogleDrive = async function() {
+            if (!window.google) {
+                showToast("Google services zijn nog aan het laden. Probeer het zo nog eens.", "error");
+                return;
+            }
+            
+            const code = htmlCode.value;
+            if (!code.trim()) {
+                showToast("Er is geen code om op te slaan!", "error");
+                return;
+            }
+            
+            currentUploadContent = code;
+
+            try {
+                showToast("Google Drive verbinden...", "info");
+                
+                // Initialiseer GIS (Login/Toestemming pop-up van Google)
+                if (!gisInited) {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: GOOGLE_CLIENT_ID,
+                        scope: SCOPES,
+                        callback: async (resp) => {
+                            if (resp.error !== undefined) {
+                                showToast("Google Drive login geannuleerd.", "error");
+                                return;
+                            }
+                            await executeDriveUpload(currentUploadContent, resp.access_token);
+                        },
+                    });
+                    gisInited = true;
+                }
+                
+                // Open de Google Login Pop-up (vraagt token aan)
+                tokenClient.requestAccessToken({prompt: ''});
+                
+            } catch (error) {
+                console.error("Drive Init Error:", error);
+                showToast("Kan niet verbinden met Google servers.", "error");
+            }
+        };
+
+        // Daadwerkelijke upload functie na toestemming
+        async function executeDriveUpload(content, accessToken) {
+            let defaultName = 'Bewerkt_Dossier.html';
+            if (activeItem.source === 'cloud') {
+                const existing = cloudItems.find(i => i.id === activeItem.id);
+                if (existing) defaultName = existing.name;
+            } else if (activeItem.source === 'local') {
+                defaultName = localItems[activeItem.index].name;
+            }
+
+            const fileName = prompt("Kies de bestandsnaam voor Google Drive:", defaultName);
+            if (!fileName) return;
+
+            showToast("Uploaden naar jouw Drive...", "info");
+
+            // Google Drive Multipart Upload opzet
+            const metadata = {
+                name: fileName.endsWith('.html') ? fileName : fileName + '.html',
+                mimeType: 'text/html'
+            };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+            form.append('file', new Blob([content], {type: 'text/html'}));
+
+            try {
+                // Verzoek rechtstreeks naar Google sturen met de accessToken
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                    body: form
+                });
+                
+                const result = await response.json();
+                if (result.id) {
+                    showToast("Gelukt! Bestand staat nu in je Google Drive.", "success");
+                } else {
+                    showToast("Fout vanuit Google: " + (result.error?.message || "Onbekend"), "error");
+                }
+            } catch (error) {
+                console.error("Upload Error:", error);
+                showToast("Netwerkfout tijdens de Drive upload.", "error");
+            }
+        }
+
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        let firebaseConfig = {};
+        try { firebaseConfig = JSON.parse(firebaseConfigStr); } catch(e) {}
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-dossier-app';
+        const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Regel 3: Auth Before Queries
+            const initAuth = async () => {
+                try {
+                    if (initialToken) {
+                        await signInWithCustomToken(auth, initialToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    showToast('Cloud authenticatie mislukt', 'error');
+                    document.getElementById('cloudStatus').textContent = "Offline";
+                }
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    document.getElementById('cloudStatus').textContent = "Verbonden";
+                    loadCloudDocuments(user.uid);
+                } else {
+                    document.getElementById('cloudStatus').textContent = "Offline";
+                    if (unsubscribeCloud) unsubscribeCloud();
+                }
+            });
+        } else {
+            document.getElementById('cloudStatus').textContent = "Niet beschikbaar (Lokaal)";
+        }
+
+        // --- CLOUD LOGICA ---
+        function loadCloudDocuments(userId) {
+            if (!currentUser) return;
+            const colRef = collection(db, 'artifacts', appId, 'users', userId, 'dossiers');
+            
+            unsubscribeCloud = onSnapshot(colRef, (snapshot) => {
+                cloudItems = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    cloudItems.push({
+                        id: doc.id,
+                        name: data.name || 'Naamloos.html',
+                        content: data.content || '',
+                        updatedAt: data.updatedAt || Date.now()
+                    });
+                });
+                
+                cloudItems.sort((a, b) => b.updatedAt - a.updatedAt); // Sorteer op laatst bewerkt
+                renderCloudList();
+            }, (error) => {
+                console.error("Firebase error:", error);
+                showToast("Kon cloud bestanden niet laden.", "error");
+            });
+        }
+
+        window.saveToCloud = async function() {
+            if (!currentUser || !db) {
+                showToast("Cloud is momenteel niet beschikbaar.", "error");
+                return;
+            }
+            
+            const content = htmlCode.value;
+            if (!content.trim()) {
+                showToast("Er is geen code om op te slaan!", "error");
+                return;
+            }
+
+            let defaultName = 'Nieuw_Dossier.html';
+            if (activeItem.source === 'cloud') {
+                const existing = cloudItems.find(i => i.id === activeItem.id);
+                if (existing) defaultName = existing.name;
+            } else if (activeItem.source === 'local') {
+                defaultName = localItems[activeItem.index].name;
+            }
+
+            const fileName = prompt("Geef dit bestand een naam in de cloud:", defaultName);
+            if (!fileName) return; 
+
+            showToast("Bezig met opslaan naar cloud...", "info");
+
+            const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'dossiers');
+            const dataToSave = {
+                name: fileName.endsWith('.html') ? fileName : fileName + '.html',
+                content: content,
+                updatedAt: Date.now()
+            };
+
+            try {
+                if (activeItem.source === 'cloud' && activeItem.id) {
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'dossiers', activeItem.id);
+                    await updateDoc(docRef, dataToSave);
+                    showToast("Cloud bestand geüpdatet!", "success");
+                } else {
+                    const newDoc = await addDoc(colRef, dataToSave);
+                    setActiveItem('cloud', newDoc.id);
+                    showToast("Nieuw bestand opgeslagen in cloud!", "success");
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Fout bij opslaan in cloud.", "error");
+            }
+        };
+
+        window.deleteCloudFile = async function(e, id) {
+            e.stopPropagation(); 
+            if(!confirm("Weet je zeker dat je dit bestand uit de cloud wilt verwijderen?")) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'dossiers', id);
+                await deleteDoc(docRef);
+                showToast("Bestand verwijderd.", "success");
+                if (activeItem.source === 'cloud' && activeItem.id === id) {
+                    htmlCode.value = '';
+                    setActiveItem(null, null);
+                    updatePreview();
+                }
+            } catch (error) {
+                showToast("Fout bij verwijderen.", "error");
+            }
+        };
+
+        // --- UI & LOKALE LOGICA ---
+        
+        function renderCloudList() {
+            const list = document.getElementById('cloudList');
+            list.innerHTML = '';
+            if (cloudItems.length === 0) {
+                list.innerHTML = '<li style="padding:15px;color:#64748b;text-align:center;font-style:italic;">Geen cloud bestanden.</li>';
+                return;
+            }
+
+            cloudItems.forEach((item) => {
+                const li = document.createElement('li');
+                if (activeItem.source === 'cloud' && activeItem.id === item.id) li.classList.add('active');
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name;
+                
+                const actions = document.createElement('div');
+                const badgeSpan = document.createElement('span');
+                badgeSpan.className = `badge cloud`;
+                badgeSpan.textContent = 'Cloud';
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-del';
+                delBtn.textContent = 'X';
+                delBtn.style.marginLeft = '5px';
+                delBtn.onclick = (e) => deleteCloudFile(e, item.id);
+
+                actions.appendChild(badgeSpan);
+                actions.appendChild(delBtn);
+
+                li.appendChild(titleSpan);
+                li.appendChild(actions);
+                
+                li.onclick = () => loadItemIntoEditor('cloud', item.id);
+                list.appendChild(li);
+            });
+        }
+
+        function renderLocalList() {
+            const list = document.getElementById('localList');
+            list.innerHTML = '';
+            if (localItems.length === 0) {
+                list.innerHTML = '<li style="padding:15px;color:#64748b;text-align:center;font-style:italic;">Geen lokale bestanden ingeladen.</li>';
+                return;
+            }
+
+            localItems.forEach((item, index) => {
+                const li = document.createElement('li');
+                if (activeItem.source === 'local' && activeItem.index === index) li.classList.add('active');
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = item.name.length > 25 ? '...' + item.name.slice(-22) : item.name;
+                
+                const badgeSpan = document.createElement('span');
+                badgeSpan.className = `badge local`;
+                badgeSpan.textContent = 'Lokaal';
+                
+                li.appendChild(titleSpan);
+                li.appendChild(badgeSpan);
+                
+                li.onclick = () => loadItemIntoEditor('local', index);
+                list.appendChild(li);
+            });
+        }
+
+        function setActiveItem(source, identifier) {
+            activeItem = { source: source, id: source === 'cloud' ? identifier : null, index: source === 'local' ? identifier : -1 };
+            renderCloudList();
+            renderLocalList();
+
+            if (source === 'cloud') {
+                const item = cloudItems.find(i => i.id === identifier);
+                editorTitle.textContent = `Code View (☁️ ${item.name})`;
+            } else if (source === 'local') {
+                const item = localItems[identifier];
+                editorTitle.textContent = `Code View (💻 ${item.name})`;
+            } else {
+                editorTitle.textContent = `Code View (Nieuw Bestand)`;
+            }
+        }
+
+        function loadItemIntoEditor(source, identifier) {
+            setActiveItem(source, identifier);
+            if (source === 'cloud') {
+                const item = cloudItems.find(i => i.id === identifier);
+                if (item) htmlCode.value = item.content;
+            } else if (source === 'local') {
+                const item = localItems[identifier];
+                if (item) htmlCode.value = item.content;
+            }
+            updatePreview();
+        }
+
+        // Live Preview Update
+        window.updatePreview = function() {
+            const code = htmlCode.value;
+            previewFrame.srcdoc = code;
+
+            if (activeItem.source === 'local' && activeItem.index >= 0) {
+                localItems[activeItem.index].content = code;
+            }
+        };
+
+        htmlCode.addEventListener('input', window.updatePreview);
+
+        // Lokale file input
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const content = event.target.result;
+                    collectionCode.value += `\n<!-- Bestand: ${file.name} -->\n${content}\n`;
+                    localItems.push({ name: file.name, content: content });
+                    renderLocalList();
+                };
+                reader.readAsText(file);
+            });
+            setTimeout(() => { if(localItems.length > 0) loadItemIntoEditor('local', localItems.length - 1); }, 100);
+            showToast(`${files.length} bestand(en) ingeladen.`, "success");
+            e.target.value = ''; // Reset input
+        });
+
+        // Download Lokaal
+        window.saveFileLocal = function() {
+            const code = htmlCode.value;
+            if (!code.trim()) {
+                showToast("Er is geen code om te downloaden!", "error");
+                return;
+            }
+
+            let fileName = 'Bewerkt_Dossier.html';
+            if (activeItem.source === 'cloud') {
+                const existing = cloudItems.find(i => i.id === activeItem.id);
+                if (existing) fileName = existing.name;
+            } else if (activeItem.source === 'local') {
+                fileName = localItems[activeItem.index].name;
+            }
+
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Bestand gedownload naar je computer.", "success");
+        };
+
+        // Download Verzamelvak
+        window.downloadCollection = function() {
+            const code = collectionCode.value;
+            if (!code.trim()) {
+                showToast("Het verzamelvak is leeg!", "error");
+                return;
+            }
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Mijn_Verzameling.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Verzameling gedownload.", "success");
+        };
+
+        // Open in nieuw tabblad
+        window.openInNewTab = function() {
+            const code = htmlCode.value;
+            if (!code.trim()) {
+                showToast("Er is geen code om te bekijken!", "error");
+                return;
+            }
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const newWin = window.open(url, '_blank');
+            if (!newWin) {
+                showToast("Je browser blokkeert pop-ups. Sta dit toe om de live view te zien.", "error");
+            }
+        };
+
+        // Drag & Drop
+        const dropZone = document.getElementById('dropZone');
+        
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                let fileCount = 0;
+                Array.from(e.dataTransfer.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const content = event.target.result;
+                        collectionCode.value += `\n<!-- Bestand: ${file.name} -->\n${content}\n`;
+                        localItems.push({ name: file.name, content: content });
+                        renderLocalList();
+                        fileCount++;
+                    };
+                    reader.readAsText(file);
+                });
+                setTimeout(() => { 
+                    if(localItems.length > 0) loadItemIntoEditor('local', localItems.length - 1); 
+                    showToast(`${fileCount} bestand(en) gedropt en geladen.`, "success");
+                }, 100);
+            } else {
+                const text = e.dataTransfer.getData('text');
+                if (text) {
+                    const urls = text.match(/(https?:\/\/[^\s]+|file:\/\/\/[^\s]+)/gi);
+                    if (urls) {
+                        urls.forEach(url => {
+                            collectionCode.value += `\n<!-- Link: ${url} -->\n<a href="${url}">${url}</a>\n`;
+                            let linkContent = url.startsWith('file:///') ? `<!-- Lokaal bestand pad: ${url} -->\n<div style="padding:20px; font-family:sans-serif;"><h3>Lokale link beveiliging</h3><a href="${url}" target="_blank" style="padding:10px 15px; background:#2563eb; color:white; text-decoration:none; border-radius:5px;">Open Link: ${url}</a></div>` : `<iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>`;
+                            localItems.push({ name: url, content: linkContent });
+                        });
+                        renderLocalList();
+                        setTimeout(() => { if(localItems.length > 0) loadItemIntoEditor('local', localItems.length - 1); }, 100);
+                        showToast("Links herkend en toegevoegd.", "success");
+                    } else {
+                        collectionCode.value += `\n<!-- Gedropte tekst -->\n${text}\n`;
+                        showToast("Tekst toegevoegd aan verzamelvak.", "info");
+                    }
+                }
+            }
+        });
+
+        // Start
+        htmlCode.value = "<h2>Welkom in de Online Editor!</h2>\n<p>Maak hier je HTML bestanden aan, of laad ze in vanaf je computer.</p>\n<p>Met de paarse knop bovenaan bewaar je ze direct veilig in je eigen Cloud Archief!</p>";
+        window.updatePreview();
+
+    </script>
+</body>
+</html>
