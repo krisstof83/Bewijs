@@ -1,0 +1,3 @@
+## 2024-05-13 - SQLite Bulk Insert Performance
+**Learning:** In Node.js applications using `sqlite3`, each `db.run` implicitly wraps the query in an individual transaction, causing significant disk I/O overhead. This makes inserting many records iteratively (like scanning multiple PDFs) exceptionally slow because SQLite has to wait for disk synchronization for every row.
+**Action:** Always wrap bulk database inserts in a single transaction (`BEGIN TRANSACTION` and `COMMIT`) and use prepared statements (`db.prepare()`) when dealing with large volumes of repetitive inserts to dramatically reduce I/O waiting time.
