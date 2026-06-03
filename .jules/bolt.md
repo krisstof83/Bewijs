@@ -1,0 +1,3 @@
+## 2025-02-24 - Batch SQLite Inserts for Electron
+**Learning:** In Node.js `sqlite3`, inserting records one-by-one without a transaction forces a disk fsync for every `db.run()`, acting as a major performance bottleneck. Furthermore, when batching inserts with `db.serialize()`, uncaught synchronous errors inside the block (e.g. from `fs.readFileSync`) can prevent subsequent DB ops (like `COMMIT`) from running, causing transaction leakage and locking the DB.
+**Action:** Always wrap large loops of database operations in `BEGIN TRANSACTION` and `COMMIT` within a `db.serialize()` block. Pre-compile statements using `db.prepare()`. Additionally, always wrap synchronous block-internal logic in `try...catch`.
