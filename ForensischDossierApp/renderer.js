@@ -11,11 +11,23 @@ async function scanPDFs() {
   const homeDir = app.getPath('home');
   const files = glob.sync(path.join(homeDir, '**/*.pdf').replace(/\\/g, '/'))
   document.getElementById('result').innerHTML = `Gevonden: ${files.length} PDF’s`
-  for (const f of files) {
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
-    const stats = fs.statSync(f);
-    db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash])
-  }
+  // ⚡ Bolt Optimization: Use explicit transaction for bulk inserts
+  // Why: By default, SQLite creates a new transaction per INSERT which requires disk flush.
+  // Wrapping all inserts in one transaction provides ~10x speedup for bulk operations.
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    try {
+      for (const f of files) {
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')
+        const stats = fs.statSync(f);
+        db.run('INSERT INTO files (path, name, date, hash) VALUES (?, ?, ?, ?)', [f, path.basename(f), stats.birthtime, hash])
+      }
+      db.run('COMMIT');
+    } catch (e) {
+      db.run('ROLLBACK');
+      console.error('Error during bulk insert:', e);
+    }
+  });
 }
 
 async function buildMaster() {
