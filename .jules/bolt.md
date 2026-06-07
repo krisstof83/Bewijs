@@ -1,0 +1,3 @@
+## 2024-06-07 - SQLite fsync Bottlenecks in Node.js
+**Learning:** In Node.js `sqlite3`, individual `db.run()` calls without a transaction force a disk fsync per insert, creating a major performance bottleneck. Furthermore, when batching inserts inside `db.serialize()`, uncaught synchronous errors (like from `fs.readFileSync`) will prevent subsequent operations (like `COMMIT`) from queuing, causing transaction leakage and permanently locking the database.
+**Action:** Always wrap bulk SQLite inserts in a transaction (`BEGIN TRANSACTION` and `COMMIT`) using `db.prepare()` for the statement. Crucially, always wrap synchronous operations inside the `db.serialize()` block with `try...catch` to prevent database locks on errors.
