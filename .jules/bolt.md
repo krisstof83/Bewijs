@@ -1,0 +1,3 @@
+## 2024-06-25 - Prevent SQLite Transaction Leaks with Error Handling
+**Learning:** When batching SQLite inserts using `db.serialize()` and a transaction (`BEGIN TRANSACTION` and `COMMIT`), any synchronous operations (like `fs.readFileSync`) within the transaction block must be wrapped in a `try...catch`. Uncaught synchronous errors will prevent subsequent database operations (like `COMMIT`) from being queued, causing a transaction leak that permanently locks the database.
+**Action:** Always wrap synchronous code in `try...catch` when it sits between `BEGIN TRANSACTION` and `COMMIT` in a `db.serialize()` block to guarantee the transaction state is cleanly managed.
