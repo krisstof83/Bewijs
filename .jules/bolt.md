@@ -1,0 +1,3 @@
+## 2024-06-19 - Uncaught sync errors leak sqlite3 transactions
+**Learning:** When batching SQLite inserts using `db.serialize()`, synchronous operations (like `fs.readFileSync` or `fs.statSync`) must be wrapped in `try...catch`. The `sqlite3` driver queues operations in order. An uncaught synchronous error halts execution *before* the subsequent `db.run('COMMIT')` is queued, causing the transaction to leak and leaving the database permanently locked.
+**Action:** Always wrap synchronous file or parsing operations in a `try...catch` block when running inside `db.serialize()` to ensure that operations like `COMMIT` or `ROLLBACK` are queued reliably.
