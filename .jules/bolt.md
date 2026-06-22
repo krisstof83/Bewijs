@@ -1,0 +1,3 @@
+## 2024-06-22 - [SQLite Performance: Transactions & Error Handling]
+**Learning:** In Node.js `sqlite3`, inserting records one-by-one without a transaction forces a disk fsync for every `db.run()`, acting as a major performance bottleneck. However, when batching inserts using `db.serialize()` with `BEGIN TRANSACTION`, any uncaught synchronous operations (like `fs.readFileSync`) within the loop will prevent the `COMMIT` from being executed, leaving the transaction open and permanently locking the database.
+**Action:** Always wrap synchronous code inside `try...catch` when batching database inserts within `db.serialize()`, and ensure `COMMIT` is executed reliably.
