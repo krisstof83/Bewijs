@@ -1,0 +1,3 @@
+## 2025-01-20 - SQLite Insert Performance Bottleneck
+**Learning:** Inserting records one-by-one without a transaction forces a disk fsync for every `db.run()`, acting as a major performance bottleneck. When batching these operations inside `db.serialize()` with a transaction, any uncaught synchronous error (e.g. `fs.readFileSync` failing) prevents subsequent `COMMIT` statements from being queued, causing transaction leakage and permanently locking the database.
+**Action:** Always batch multiple inserts using `BEGIN TRANSACTION` and `COMMIT` within `db.serialize()` along with `db.prepare()`. Crucially, wrap synchronous operations within the transaction block in a `try...catch` so that `COMMIT` (or `ROLLBACK`) is reliably queued and executed.
