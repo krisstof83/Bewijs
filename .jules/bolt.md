@@ -1,0 +1,3 @@
+## 2025-01-20 - Transaction Leakage in Node.js sqlite3 Database Batching
+**Learning:** When batching multiple `sqlite3` database inserts using `db.serialize()` along with `BEGIN TRANSACTION` and `COMMIT` for performance, uncaught synchronous errors (like `fs.readFileSync` failing on a corrupted file) will prevent subsequent database operations within the `serialize` block (like `COMMIT`) from being executed. This causes a transaction leakage, leaving the database permanently locked.
+**Action:** Always wrap synchronous operations inside a `try...catch` block when running inside a transaction block in `db.serialize()` to ensure that errors are handled and `COMMIT` or `ROLLBACK` is reached, preventing database locks.
