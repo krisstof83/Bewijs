@@ -1,0 +1,3 @@
+## 2025-06-27 - SQLite Insert Batching & Transaction Leaks
+**Learning:** Node.js `sqlite3` executes `db.run` inserts with an implicit fsync if not wrapped in a transaction, leading to severe performance bottlenecks. Synchronous file operations like `fs.readFileSync` within `db.serialize()` must be wrapped in `try...catch`, otherwise an uncaught error will prevent the subsequent `COMMIT` from executing, permanently locking the database with an open transaction.
+**Action:** Always batch multiple inserts using `BEGIN TRANSACTION`, `db.prepare()`, and `COMMIT` within `db.serialize()`. Ensure all synchronous operations inside the block have robust error handling to prevent transaction leaks.
