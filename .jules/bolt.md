@@ -1,0 +1,3 @@
+## 2024-05-24 - Async Streams and SQLite Transactions for Electron Performance
+**Learning:** In Electron, synchronous file reads (e.g. `fs.readFileSync`) for large files like PDFs block the main thread, causing severe memory/performance bottlenecks. Furthermore, executing multiple SQLite inserts without batching forces a disk fsync per operation, severely degrading performance.
+**Action:** When handling large files or performing multiple database inserts in Electron/Node, strictly utilize asynchronous streams for I/O operations and batch SQLite inserts using `db.serialize()`, `db.run('BEGIN TRANSACTION')`, and `COMMIT`.
