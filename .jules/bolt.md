@@ -1,0 +1,3 @@
+## 2023-10-27 - SQLite Batch Inserts and File Hashing Streams
+**Learning:** In Node.js `sqlite3`, inserting records one-by-one without a transaction forces a disk fsync for every `db.run()`, acting as a major performance bottleneck. Furthermore, using `fs.readFileSync` blocks the main thread for large files like PDFs, impacting performance.
+**Action:** Always batch multiple inserts using `BEGIN TRANSACTION` and `COMMIT` within `db.serialize()` along with `db.prepare()` to ensure performance scaling. Use asynchronous streams like `fs.createReadStream` instead of synchronous reads (`fs.readFileSync`) to prevent main thread blocking and memory bottlenecks for large files.
