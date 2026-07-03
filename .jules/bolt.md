@@ -1,0 +1,3 @@
+## 2024-05-24 - Electron & SQLite Performance Bottlenecks
+**Learning:** In Node.js sqlite3, inserting records one-by-one without a transaction forces a disk fsync for every db.run(), causing severe performance degradation. Additionally, using synchronous file operations (like fs.readFileSync) for large files blocks the Electron main thread and causes memory spikes.
+**Action:** Always batch multiple SQLite inserts using `BEGIN TRANSACTION` and `COMMIT` within `db.serialize()` along with `db.prepare()`. Use asynchronous streams (e.g., `fs.createReadStream`) for heavy file operations to keep the main thread unblocked and reduce memory consumption.
