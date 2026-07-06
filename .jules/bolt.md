@@ -1,0 +1,3 @@
+## 2025-02-12 - Synchronous Hashing and Unbatched Inserts in SQLite Electron App
+**Learning:** Using `fs.readFileSync` for large files blocks the main thread in an Electron app, and executing `db.run` in a loop without a transaction forces a disk fsync for each insert, leading to severe performance degradation. Uncaught sync errors within `db.serialize` will lock the DB.
+**Action:** Always use asynchronous streams (`fs.createReadStream`) for processing large files like hashes. Always batch multiple SQLite inserts using `BEGIN TRANSACTION`, `db.prepare()`, and `COMMIT` inside `db.serialize()`. Wrap synchronous parts in a transaction in `try...catch`.
