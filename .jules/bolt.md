@@ -1,0 +1,3 @@
+## 2025-05-15 - SQLite Batching Transaction Leak
+**Learning:** When batching SQLite inserts using `db.serialize()`, if a synchronous operation (like `fs.readFileSync` or `fs.statSync`) throws an uncaught error within the block (e.g. file missing/permissions), subsequent queued operations like `COMMIT` are bypassed. This causes transaction leakage, permanently locking the database.
+**Action:** Ensure synchronous operations inside a `db.serialize()` block are wrapped in a `try...catch` that handles the error and safely rolls back or skips without preventing the final `COMMIT` or `ROLLBACK`. Better yet, perform the synchronous or asynchronous operations (like generating file hashes) before starting the transaction block.
