@@ -3,42 +3,79 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auto Forensic OSINT Dossier Platform</title>
+    <title>Disk Catalog Cleaner Pro</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header>
-      <h1>Auto Forensic OSINT Dossier Platform</h1>
-    </header>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <h1>Disk Catalog Pro</h1>
+        <p class="sub">Cleaner-stijl scanner voor bestanden, duplicaten en grote bestanden.</p>
 
-    <nav class="tabs">
-      <button data-tab="dashboard" class="active">Dashboard</button>
-      <button data-tab="evidence">Evidence</button>
-      <button data-tab="timeline">Timeline</button>
-      <button data-tab="osint">OSINT Search</button>
-    </nav>
+        <label class="scan-button" for="folderPicker">Nieuwe scan</label>
+        <input id="folderPicker" type="file" webkitdirectory directory multiple />
 
-    <main>
-      <section id="dashboard" class="tab-content active">
-        <div id="summary-cards" class="cards"></div>
-      </section>
+        <nav class="menu">
+          <button data-view="all" class="active">Alle bestanden</button>
+          <button data-view="large">Rode bestanden</button>
+          <button data-view="duplicates">Duplicaten</button>
+          <button data-view="folders">Mappen / bron</button>
+          <button data-view="report">Forensisch rapport</button>
+        </nav>
 
-      <section id="evidence" class="tab-content">
-        <ul id="evidence-list"></ul>
-      </section>
+        <section class="stats">
+          <article>
+            <span>Totaal bestanden</span>
+            <strong id="totalFiles">0</strong>
+          </article>
+          <article>
+            <span>Dubbele bestanden</span>
+            <strong id="totalDuplicates">0</strong>
+          </article>
+          <article>
+            <span>Grote bestanden (&gt;500MB)</span>
+            <strong id="totalLarge">0</strong>
+          </article>
+          <article>
+            <span>Totale grootte</span>
+            <strong id="totalSize">0 B</strong>
+          </article>
+        </section>
+      </aside>
 
-      <section id="timeline" class="tab-content">
-        <ul id="timeline-list"></ul>
-      </section>
+      <main class="content">
+        <header>
+          <h2 id="viewTitle">Alle bestanden</h2>
+          <div class="actions">
+            <button id="sortByName" class="secondary">Sorteer op naam</button>
+            <button id="sortBySize" class="secondary">Sorteer op grootte</button>
+            <button id="runAnalysis" class="secondary">ANALYSE STARTEN</button>
+            <button id="clearCatalog" class="danger">Catalogus leegmaken</button>
+          </div>
+        </header>
 
-      <section id="osint" class="tab-content">
-        <form id="osint-form">
-          <input id="q" type="text" placeholder="Zoekterm" required />
-          <button type="submit">Zoeken</button>
-        </form>
-        <ul id="osint-list"></ul>
-      </section>
-    </main>
+        <section id="viewAll" class="panel view active"></section>
+        <section id="viewLarge" class="panel view"></section>
+        <section id="viewDuplicates" class="panel view"></section>
+        <section id="viewFolders" class="panel view"></section>
+        <section id="viewReport" class="panel view"></section>
+      </main>
+    </div>
+
+    <div id="scanOverlay" class="scan-overlay hidden" aria-live="polite">
+      <div class="scan-box">
+        <h3>Deep Scan actief</h3>
+        <p id="scanText">Scannen gestart…</p>
+        <div class="progress-wrap">
+          <div id="progressBar" class="progress"></div>
+        </div>
+        <div class="scan-stats">
+          <span id="scanPercent">0%</span>
+          <span id="scanCounts">0 bestanden • 0 duplicaten • 0 rood</span>
+        </div>
+        <div id="flyList" class="fly-list"></div>
+      </div>
+    </div>
 
     <script src="dashboard.js"></script>
   </body>
